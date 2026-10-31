@@ -3,13 +3,13 @@
 「程序所在目录」的单一事实来源。
 
 拆分前 `os.path.dirname(os.path.abspath(__file__))` 就等于程序目录；
-拆分后每个模块的 `__file__` 都在 `framelab/` 里，直接沿用会把
-framelab_config.json / PresentMon 查找目录 / 提权脚本路径全都指到包目录里
-（实测踩坑：配置被写到 framelab/framelab_config.json，用户的旧配置失效）。
+拆分后每个模块的 `__file__` 都在 `stuttertriage/` 里，直接沿用会把
+stuttertriage_config.json / PresentMon 查找目录 / 提权脚本路径全都指到包目录里
+（实测踩坑：配置被写到 stuttertriage/stuttertriage_config.json，用户的旧配置失效）。
 因此统一走本模块：
 
-    APP_DIR  = 与启动器 FrameLab.py 同级的目录（打包后 = exe 所在目录）
-    PKG_DIR  = framelab 包目录（只放代码，不放用户数据）
+    APP_DIR  = 与启动器 StutterTriage.py 同级的目录（打包后 = exe 所在目录）
+    PKG_DIR  = stuttertriage 包目录（只放代码，不放用户数据）
 """
 import os
 import sys
@@ -59,5 +59,5 @@ def launcher_path():
     """提权重启时要传给新进程的脚本路径（打包时返回 None）"""
     if getattr(sys, "frozen", False):
         return None
-    cand = app_path("FrameLab.py")
+    cand = app_path("StutterTriage.py")
     return cand if os.path.isfile(cand) else None

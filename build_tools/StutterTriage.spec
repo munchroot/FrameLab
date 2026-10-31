@@ -1,17 +1,17 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-FrameLab 的 PyInstaller 打包配置（单文件 EXE）。
+StutterTriage 的 PyInstaller 打包配置（单文件 EXE）。
 
 用法（不要直接双击，走 build_tools/build_exe.ps1，它会把产物放到 dist/）：
     & "<venv>\Scripts\python.exe" -m PyInstaller --noconfirm --clean `
         --distpath "<project>\dist" --workpath "<build-tmp>" `
-        "<project>\build_tools\FrameLab.spec"
+        "<project>\build_tools\StutterTriage.spec"
 
 要点：
-  · 入口仍是 FrameLab.py（薄启动器），所以打包后行为与源码运行完全一致；
-  · framelab/paths.py 已按 sys.frozen 处理「程序目录 = exe 所在目录」，
-    因此 exe 旁边的 framelab_config.json 就是用户配置（便携式）；
-  · 把 framelab 全部子模块显式列为 hiddenimports —— 项目里有若干
+  · 入口仍是 StutterTriage.py（薄启动器），所以打包后行为与源码运行完全一致；
+  · stuttertriage/paths.py 已按 sys.frozen 处理「程序目录 = exe 所在目录」，
+    因此 exe 旁边的 stuttertriage_config.json 就是用户配置（便携式）；
+  · 把 stuttertriage 全部子模块显式列为 hiddenimports —— 项目里有若干
     「函数内延迟导入」（例如 vram_bar_text / build_palette 在用到时才 import），
     显式列出可避免个别子模块被静态分析漏掉；
   · 排除 tkinter / matplotlib / scipy 等完全用不到的重型依赖，控制体积。
@@ -22,11 +22,11 @@ from PyInstaller.utils.hooks import collect_submodules
 
 SPEC_DIR = os.path.dirname(os.path.abspath(SPEC))          # <project>/build_tools
 PROJ = os.path.dirname(SPEC_DIR)                           # <project>
-ICON = os.path.join(PROJ, "assets", "framelab.ico")
+ICON = os.path.join(PROJ, "assets", "stuttertriage.ico")
 VERSION_FILE = os.path.join(SPEC_DIR, "version_info.txt")
 
 # ---- 隐藏导入：项目自身全部子模块 + pyqtgraph 的图形项 ----
-hiddenimports = collect_submodules("framelab")
+hiddenimports = collect_submodules("stuttertriage")
 hiddenimports += [
     "pyqtgraph",
     "pyqtgraph.graphicsItems",
@@ -65,11 +65,11 @@ datas = []
 if os.path.isfile(_PM_SRC):
     datas.append((_PM_SRC, "PresentMon"))
 else:  # 缺文件不阻断构建，但必须显式喊出来
-    print("[FrameLab.spec] WARNING: external/PresentMon/PresentMon-x64.exe 不存在，"
+    print("[StutterTriage.spec] WARNING: external/PresentMon/PresentMon-x64.exe 不存在，"
           "打包后的 EXE 将没有内置 PresentMon")
 
 a = Analysis(
-    [os.path.join(PROJ, "FrameLab.py")],
+    [os.path.join(PROJ, "StutterTriage.py")],
     pathex=[PROJ],
     binaries=[],
     datas=datas,
@@ -90,7 +90,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name="FrameLab",
+    name="StutterTriage",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

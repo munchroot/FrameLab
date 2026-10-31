@@ -1,6 +1,6 @@
 # 第三方组件声明 / Third-Party Notices
 
-本项目（FrameLab）使用以下第三方组件。各组件版权归其各自所有者所有，
+本项目（StutterTriage）使用以下第三方组件。各组件版权归其各自所有者所有，
 并受其各自许可证条款约束。
 
 ---
@@ -42,7 +42,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-> FrameLab 仅为**启动** PresentMon 并解析其 CSV 输出，不修改其代码。
+> StutterTriage 仅为**启动** PresentMon 并解析其 CSV 输出，不修改其代码。
 
 ---
 
@@ -55,7 +55,7 @@ SOFTWARE.
 | [numpy](https://pypi.org/project/numpy/) | BSD-3-Clause | 数值计算 |
 
 > **PyQt6 的 GPL-3.0 条款**：PyQt6 允许在 GPL-3.0 或商业许可下使用。
-> 本项目以 **MIT** 发布。若你打算将 FrameLab 用作**闭源商业软件**，
+> 本项目以 **MIT** 发布。若你打算将 StutterTriage 用作**闭源商业软件**，
 > 需改用 PySide6（LGPL-3.0）或向 Riverbank 购买 PyQt 商业许可。
 
 ### 构建期依赖（不随包分发）
@@ -70,4 +70,4 @@ SOFTWARE.
 
 - **Windows ETW / PresentMon 驱动栈** —— Microsoft Windows 系统组件
 - **AMD ADL**（`atiadlxx.dll`）、**NVIDIA NVML**（`nvml.dll`）—— 显卡厂商驱动，
-  FrameLab 仅在运行时动态加载，**不分发**这些文件
+  StutterTriage 仅在运行时动态加载，**不分发**这些文件

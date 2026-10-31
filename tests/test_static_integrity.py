@@ -26,10 +26,10 @@ try:
 except Exception:
     pass
 
-import framelab                                              # noqa: E402
-from framelab import consts, theme                           # noqa: E402
+import stuttertriage                                              # noqa: E402
+from stuttertriage import consts, theme                           # noqa: E402
 
-PKG = os.path.dirname(os.path.abspath(framelab.__file__))
+PKG = os.path.dirname(os.path.abspath(stuttertriage.__file__))
 
 FAILS = []
 
@@ -49,7 +49,7 @@ def iter_modules():
             rel = os.path.relpath(p, PKG)[:-3].replace(os.sep, ".")
             if rel.endswith(".__init__"):
                 rel = rel[:-len(".__init__")]
-            dotted = "framelab" if rel in ("", "__init__") else "framelab." + rel
+            dotted = "stuttertriage" if rel in ("", "__init__") else "stuttertriage." + rel
             yield dotted, p
 
 
@@ -98,10 +98,10 @@ def main():
     live_const = tuple(consts.LIVE_CONST_NAMES)
     bad = []
     for dotted, path in mods:
-        if dotted in ("framelab.theme", "framelab.consts"):
+        if dotted in ("stuttertriage.theme", "stuttertriage.consts"):
             continue
         src = io.open(path, encoding="utf-8").read()
-        shim = dotted == "framelab"
+        shim = dotted == "stuttertriage"
         # 「安全」的判定：模块导入时把自己登记进主题注册表（bind_globals(globals())）
         bound_theme = ("bind_globals" in src and "globals()" in src) or shim
         for m in re.finditer(r"^from\s+(\.+[\w.]*theme)\s+import\s+\(?([^)\n]+)\)?", src, re.M):
@@ -119,9 +119,9 @@ def main():
     check("无冻结式 import", not bad, " | ".join(bad))
 
     print("== 3. 主题热切换真的广播到所有 UI 模块 ==")
-    from framelab.ui import base_window as _bw, chart as _chart, navtabs as _nav
-    from framelab.ui import diagnosis as _dg, gauge as _gauge, main_window as _mw
-    from framelab.ui import pages as _pages
+    from stuttertriage.ui import base_window as _bw, chart as _chart, navtabs as _nav
+    from stuttertriage.ui import diagnosis as _dg, gauge as _gauge, main_window as _mw
+    from stuttertriage.ui import pages as _pages
     targets = [_bw, _bw, _mw, _gauge, _nav, _chart, _dg, _pages]
     names = ["base_window", "base_window", "main_window", "gauge", "navtabs", "chart",
              "diagnosis", "pages"]
@@ -147,17 +147,17 @@ def main():
     print("== 4. 拆分后仍只有一个「程序目录」来源 ==")
     offenders = []
     for dotted, path in mods:
-        if dotted in ("framelab.paths",):
+        if dotted in ("stuttertriage.paths",):
             continue
         src = io.open(path, encoding="utf-8").read()
         for m in re.finditer(r"os\.path\.dirname\(os\.path\.abspath\(__file__\)\)", src):
             offenders.append(dotted)
             break
-    check("路径都走 framelab.paths.app_dir()", not offenders, ", ".join(offenders))
+    check("路径都走 stuttertriage.paths.app_dir()", not offenders, ", ".join(offenders))
 
     print("== 5. 顶层 shim 仍能导出旧名字 ==")
-    import FrameLab as F
-    legacy = ("FrameLabWindow", "FrameRecord", "HardwareSnapshot", "FrameStore", "Config",
+    import StutterTriage as F
+    legacy = ("StutterTriageWindow", "FrameRecord", "HardwareSnapshot", "FrameStore", "Config",
               "CONFIG_SCHEMA", "DEFAULT_CONFIG", "DIAG", "DiagLog", "PG_SYMBOLS",
               "DATA_SOURCE_SIM", "GlobalHotkeyManager", "SnapshotDiffInspector",
               "theme_from_custom_bg", "apply_theme_to_globals", "ACCENT", "MOD_CONTROL",
@@ -171,12 +171,12 @@ def main():
     print("== 6. 随包 PresentMon（EXE 拷给别人也能真实采集）==")
     pm_src = os.path.join(ROOT, "external", "PresentMon", "PresentMon-x64.exe")
     check("仓库内有 PresentMon 副本", os.path.isfile(pm_src), pm_src)
-    spec_src = io.open(os.path.join(ROOT, "build_tools", "FrameLab.spec"),
+    spec_src = io.open(os.path.join(ROOT, "build_tools", "StutterTriage.spec"),
                        encoding="utf-8").read()
     check("打包脚本把 PresentMon 打进 EXE",
           "PresentMon" in spec_src and "datas" in spec_src, "spec 未引用 PresentMon")
-    from framelab import paths as P
-    from framelab.engines.presentmon import find_presentmon_binary
+    from stuttertriage import paths as P
+    from stuttertriage.engines.presentmon import find_presentmon_binary
     check("bundle_dir 在源码运行 = 项目根",
           os.path.normcase(P.bundle_dir()) == os.path.normcase(ROOT), P.bundle_dir())
     got = find_presentmon_binary()

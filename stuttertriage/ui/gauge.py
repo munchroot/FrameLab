@@ -626,7 +626,7 @@ def vram_text(dedicated_mb, total_mb, nonlocal_mb=None):
     显存进度条文案（改进建议书 二.3）：`已用 X.X GB / 总计 X.X GB (XX%)`。
 
     规范要求进度条数值严格 `clamp(0, 100)` —— 这里返回的百分比一定在 [0,100]。
-    优先复用 `framelab.stats.vram_bar_text`（唯一权威实现，纯函数、可单测）；
+    优先复用 `stuttertriage.stats.vram_bar_text`（唯一权威实现，纯函数、可单测）；
     若该实现不可用则用本地等价实现兜底，保证界面永远不会出现 `1008.40%`。
     """
     try:

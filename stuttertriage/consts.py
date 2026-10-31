@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""诊断阈值与常量（可被 framelab_config.json 覆盖；bind_globals 让各模块热更新）。"""
+"""诊断阈值与常量（可被 stuttertriage_config.json 覆盖；bind_globals 让各模块热更新）。"""
 
 import re
 
@@ -93,14 +93,14 @@ NON_GAME_PROCESSES = {
 
 
 # PresentMon 会话名前缀（用于清理本工具的历史残留会话）
-PM_SESSION_PREFIX = "FrameLab_PM_"
+PM_SESSION_PREFIX = "StutterTriage_PM_"
 
 
 PM_BUFFER_SIZE    = 4096            # 仅缓解丢包，非 2 的幂会被 PresentMon 拒绝
 
 
 
-# 基线追踪参数（模块级默认值，可被 framelab_config.json 覆盖）
+# 基线追踪参数（模块级默认值，可被 stuttertriage_config.json 覆盖）
 BASELINE_WINDOW          = 240       # 基线采样窗口帧数
 
 
@@ -128,7 +128,7 @@ _RE_ENGTYPE = re.compile(r"engtype_([A-Za-z0-9_]+)")
 # §9.5  实战 UX 增强层
 # ------------------------------------------------------------------------------
 # 本节是**独立新增**的功能区，与 §1~§9 的既有逻辑解耦：
-#   §9.5.1  阈值参数外部化（framelab_config.json）
+#   §9.5.1  阈值参数外部化（stuttertriage_config.json）
 #   §9.5.2  全局热键「打点标记」（Windows RegisterHotKey + 原生事件过滤器）
 #   §9.5.3  管理员权限检测 / 温和提权入口
 #   §9.5.4  PresentMon 缺失获取指引 + 手动路径配置

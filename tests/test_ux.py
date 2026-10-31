@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 # 【v4.0 移植】原 _test_ux.py：行为断言全部保留；
-# 源码扫描类断言改为扫描整个 framelab 包（拆分后字符串分布在不同模块）。
+# 源码扫描类断言改为扫描整个 stuttertriage 包（拆分后字符串分布在不同模块）。
 # -*- coding: utf-8 -*-
 """
-FrameLab —— 实战 UX 增强的自动化测试（对应任务 t4）。
+StutterTriage —— 实战 UX 增强的自动化测试（对应任务 t4）。
 
 覆盖范围：
-  1. 配置读写（framelab_config.json）：默认值 / 往返 / 脏值回落 / 原子写
+  1. 配置读写（stuttertriage_config.json）：默认值 / 往返 / 脏值回落 / 原子写
   2. 阈值外部化：apply_to_globals 真的改写模块级常量
   3. 模拟/真实/离线 数据源判定 + 导出 CSV 的 DataSource 列
   4. 模拟水印元素存在且可见性可切换
@@ -40,9 +40,9 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
-    import FrameLab as F
+    import StutterTriage as F
 except Exception as _e:      # pragma: no cover
-    print("!! 无法导入 FrameLab: %s" % _e)
+    print("!! 无法导入 StutterTriage: %s" % _e)
     raise
 
 
@@ -52,12 +52,12 @@ except Exception as _e:      # pragma: no cover
 
 
 # ---------------------------------------------------------------------------
-# 【v4.0 移植】源码扫描辅助：单体时代读 FrameLab.py，现在要扫整个 framelab 包
+# 【v4.0 移植】源码扫描辅助：单体时代读 StutterTriage.py，现在要扫整个 stuttertriage 包
 # ---------------------------------------------------------------------------
 def _all_source():
-    import framelab
+    import stuttertriage
     parts = []
-    base = os.path.dirname(os.path.abspath(framelab.__file__))
+    base = os.path.dirname(os.path.abspath(stuttertriage.__file__))
     for root, _dirs, files in os.walk(base):
         for fn in sorted(files):
             if fn.endswith(".py"):
@@ -78,7 +78,7 @@ class TestConfigIO(unittest.TestCase):
         """配置文件不存在 → 返回默认值，existed=False，且不抛异常"""
         d = tempfile.mkdtemp(prefix="fl_cfg_")
         try:
-            p = os.path.join(d, "framelab_config.json")
+            p = os.path.join(d, "stuttertriage_config.json")
             cfg = F.Config.load(p)
             self.assertFalse(cfg.existed)
             self.assertEqual(cfg.get("cpu0_jam_threshold"), 92.0)
@@ -90,7 +90,7 @@ class TestConfigIO(unittest.TestCase):
         """写入 → 读回，值必须完全一致"""
         d = tempfile.mkdtemp(prefix="fl_cfg_")
         try:
-            p = os.path.join(d, "framelab_config.json")
+            p = os.path.join(d, "stuttertriage_config.json")
             cfg = F.Config.load(p)
             cfg.set("cpu0_jam_threshold", 88.5)
             cfg.set("pm_buffer_size", 2048)
@@ -115,7 +115,7 @@ class TestConfigIO(unittest.TestCase):
         """脏配置（字符串型数字 / 完全非法）不得让程序起不来"""
         d = tempfile.mkdtemp(prefix="fl_cfg_")
         try:
-            p = os.path.join(d, "framelab_config.json")
+            p = os.path.join(d, "stuttertriage_config.json")
             with open(p, "w", encoding="utf-8") as f:
                 f.write('{"cpu0_jam_threshold": "not-a-number", '
                         '"pm_buffer_size": "abc", "spill_threshold": 123}')
@@ -132,7 +132,7 @@ class TestConfigIO(unittest.TestCase):
         """损坏的 JSON 文件 → 用默认值，不能抛异常"""
         d = tempfile.mkdtemp(prefix="fl_cfg_")
         try:
-            p = os.path.join(d, "framelab_config.json")
+            p = os.path.join(d, "stuttertriage_config.json")
             with open(p, "w", encoding="utf-8") as f:
                 f.write("{ this is not json ][")
             cfg = F.Config.load(p)
@@ -161,7 +161,7 @@ class TestConfigApplyToGlobals(unittest.TestCase):
         """配置必须真的改写模块级常量（这些常量在别处被直接引用）"""
         d = tempfile.mkdtemp(prefix="fl_cfg_")
         try:
-            p = os.path.join(d, "framelab_config.json")
+            p = os.path.join(d, "stuttertriage_config.json")
             cfg = F.Config.load(p)
             cfg.set("spill_threshold", 32 << 20)
             cfg.set("freq_drop_ratio", 0.25)
@@ -677,8 +677,8 @@ class TestEtwCleanup(unittest.TestCase):
         class _Mgr(F.EtwSessionManager):
             @staticmethod
             def list_sessions():
-                return ["FrameLab_PM_live01", "FrameLab_PM_stale02",
-                        "FrameLab_PM_stale03", "OtherAppSession"]
+                return ["StutterTriage_PM_live01", "StutterTriage_PM_stale02",
+                        "StutterTriage_PM_stale03", "OtherAppSession"]
 
             @staticmethod
             def stop_session(name):
@@ -686,13 +686,13 @@ class TestEtwCleanup(unittest.TestCase):
                 return True
 
         mgr = _Mgr()
-        stopped = mgr.cleanup_stale(skip="FrameLab_PM_live01")
-        self.assertNotIn("FrameLab_PM_live01", stopped,
+        stopped = mgr.cleanup_stale(skip="StutterTriage_PM_live01")
+        self.assertNotIn("StutterTriage_PM_live01", stopped,
                          "当前正在使用的会话被误杀了")
-        self.assertNotIn("FrameLab_PM_live01", calls,
+        self.assertNotIn("StutterTriage_PM_live01", calls,
                          "当前正在使用的会话被 stop 了")
-        self.assertIn("FrameLab_PM_stale02", stopped)
-        self.assertIn("FrameLab_PM_stale03", stopped)
+        self.assertIn("StutterTriage_PM_stale02", stopped)
+        self.assertIn("StutterTriage_PM_stale03", stopped)
         self.assertNotIn("OtherAppSession", stopped,
                          "清理范围不应波及其它软件的 ETW 会话")
 
@@ -703,7 +703,7 @@ class TestEtwCleanup(unittest.TestCase):
         class _Mgr(F.EtwSessionManager):
             @staticmethod
             def list_sessions():
-                return ["FrameLab_PM_a", "FrameLab_PM_b"]
+                return ["StutterTriage_PM_a", "StutterTriage_PM_b"]
 
             @staticmethod
             def stop_session(name):
@@ -787,16 +787,16 @@ class TestProjectArtifacts(unittest.TestCase):
     def test_no_stale_backup_newer_than_source(self):
         """
         旧 .bak 备份已按「清理过时无用文件」删除（迁移到项目外的回滚目录）；
-        这里守护的是「不得残留比 FrameLab.py 更新的旧备份」——
+        这里守护的是「不得残留比 StutterTriage.py 更新的旧备份」——
         否则用户可能拿旧备份覆盖新代码。
         """
         d = os.path.dirname(os.path.abspath(F.__file__))
-        src = os.path.join(d, "FrameLab.py")
+        src = os.path.join(d, "StutterTriage.py")
         src_m = os.path.getmtime(src)
         newer = [b for b in os.listdir(d)
-                 if b.startswith("FrameLab.py.bak")
+                 if b.startswith("StutterTriage.py.bak")
                  and os.path.getmtime(os.path.join(d, b)) > src_m]
-        self.assertEqual(newer, [], "存在比 FrameLab.py 更新的旧备份: %s" % newer)
+        self.assertEqual(newer, [], "存在比 StutterTriage.py 更新的旧备份: %s" % newer)
 
 
 # ==============================================================================

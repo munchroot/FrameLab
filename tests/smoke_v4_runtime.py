@@ -3,7 +3,7 @@
 v4.1 运行时冒烟验证（offscreen，不启动真实 PresentMon 采集）。
 
 覆盖改进建议书（gemini-code-1793074763581）的 5 条硬性规范：
-  A. 包拆分后所有模块可导入、旧顶层名字仍可从 FrameLab 导入（向后兼容）
+  A. 包拆分后所有模块可导入、旧顶层名字仍可从 StutterTriage 导入（向后兼容）
   B. 【规范一】左栏固定 240px + 5 张大号视图导航卡；右侧 QStackedWidget 5 页整块替换；
      顶部横幅与 4 张帧数大卡常驻（不在 stack 里）
   C. 喂合成帧 + 硬件快照后：卡片有数、评级合法、曲线有数据、导航徽章有实时文案
@@ -51,7 +51,7 @@ def pump(app, ms=150):
 def feed(win, n=400, drop_at=(120, 260), app_name="TestGame.exe",
          vram_ratio=0.92, nonlocal_mb=700.0, splash_at=120):
     """塞入合成帧 + 绑定硬件快照（模拟真实采集的写入顺序）"""
-    import framelab.models as M
+    import stuttertriage.models as M
     total = 8.0 * 1024 * 1024 * 1024
     for i in range(n):
         seq = i // 4
@@ -109,9 +109,9 @@ def vram_row(ded_ratio, nonlocal_mb, prime_with_splash=False, base_nonlocal_mb=0
 
     prime_with_splash=True 时基线本身就带 700MB（增量 ≈ 0）→ 不该报爆显存。
     """
-    from framelab.analysis import FrameStore
-    from framelab.analysis import SnapshotDiffInspector
-    import framelab.models as M
+    from stuttertriage.analysis import FrameStore
+    from stuttertriage.analysis import SnapshotDiffInspector
+    import stuttertriage.models as M
     store = FrameStore()
     total = 8.0 * 1024 * 1024 * 1024
     t0 = time.time()
@@ -147,26 +147,26 @@ def main():
     app.setStyle("Fusion")
 
     print("== A. 包拆分 / 向后兼容 ==")
-    import FrameLab as F
-    import framelab
-    from framelab import (analysis, config, consts, csvio, etw, hotkeys, models,
+    import StutterTriage as F
+    import stuttertriage
+    from stuttertriage import (analysis, config, consts, csvio, etw, hotkeys, models,
                           probes, stats, theme, utils, winadmin)
-    from framelab.engines import hardware, presentmon
-    from framelab.ui import (base_window, chart, diagnosis, gauge, main_window,
+    from stuttertriage.engines import hardware, presentmon
+    from stuttertriage.ui import (base_window, chart, diagnosis, gauge, main_window,
                              navtabs, pages, plain, widgets)
-    check("版本号存在", bool(framelab.__version__), framelab.__version__)
+    check("版本号存在", bool(stuttertriage.__version__), stuttertriage.__version__)
     check("旧顶层名字可用", all(hasattr(F, n) for n in (
-        "FrameLabWindow", "FrameRecord", "HardwareSnapshot", "FrameStore", "Config",
+        "StutterTriageWindow", "FrameRecord", "HardwareSnapshot", "FrameStore", "Config",
         "CONFIG_SCHEMA", "DIAG", "PG_SYMBOLS", "DATA_SOURCE_SIM", "GlobalHotkeyManager",
         "SnapshotDiffInspector", "theme_from_custom_bg", "ACCENT")), "")
     check("模块文件齐全", all([stats, gauge, navtabs, pages, chart, diagnosis, plain]))
     check("旧手风琴模块已删除", not os.path.exists(
-        os.path.join(ROOT, "framelab", "ui", "accordion.py")))
+        os.path.join(ROOT, "stuttertriage", "ui", "accordion.py")))
 
     print("== B. 建窗（规范一：240px 导航卡 + QStackedWidget）==")
-    win = F.FrameLabWindow()
+    win = F.StutterTriageWindow()
     pump(app, 200)
-    check("窗口标题含版本号", "FrameLab 1.0.4" in win.windowTitle(), win.windowTitle())
+    check("窗口标题含版本号", "StutterTriage 1.0.4" in win.windowTitle(), win.windowTitle())
     check("左栏固定 240px", win.sidebar.width() == 240 and win.sidebar.maximumWidth() == 240,
           str(win.sidebar.width()))
     check("5 张大号导航卡", len(win.nav_tabs) == 5, str(len(win.nav_tabs)))
@@ -387,8 +387,8 @@ def main():
     check("收起病历卡后解除锁定", win.selected_frame is None)
 
     print("== E2. 主题 / FPS↔ms ==")
-    from framelab.theme import THEME_LIGHT, THEME_DEEP_SPACE
-    import framelab.theme as _T
+    from stuttertriage.theme import THEME_LIGHT, THEME_DEEP_SPACE
+    import stuttertriage.theme as _T
     keep_key = _T.CURRENT_THEME.key          # 测试结束后还原，别改用户当前皮肤
     # 【v1.0.1】配置修好后，启动皮肤就是用户存档里的那套；先切到深色再切浅色，
     # 这样无论用户存档是浅是深，都能真正验证"换肤立即生效"。
@@ -466,8 +466,8 @@ def main():
 # ---------------------------------------------------------------------------
 def stutter_count(fps_seq):
     """把帧率序列转成帧流，返回严格顿挫标记数（规范五）"""
-    from framelab import stats
-    from framelab.models import FrameRecord
+    from stuttertriage import stats
+    from stuttertriage.models import FrameRecord
     frames = [FrameRecord(i, i * 0.01, 0.0, "T.exe", 1, 1000.0 / max(0.1, v))
               for i, v in enumerate(fps_seq)]
     return int(stats.stutter_flags(frames).sum())
@@ -475,8 +475,8 @@ def stutter_count(fps_seq):
 
 def dc_rows(base_mhz, cur_mhz, load3d, slow_frame):
     """构造一帧 + 一张硬件快照，返回「GPU 核心频率 / 撞墙降频」那一行（规范三）"""
-    from framelab.analysis import FrameStore, SnapshotDiffInspector
-    import framelab.models as M
+    from stuttertriage.analysis import FrameStore, SnapshotDiffInspector
+    import stuttertriage.models as M
     store = FrameStore()
     total = 8.0 * 1024 * 1024 * 1024
     t0 = time.time()

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-FrameLab 主窗口（v4.1 · 「视图导航卡 + QStackedWidget」布局重构）。
+StutterTriage 主窗口（v4.1 · 「视图导航卡 + QStackedWidget」布局重构）。
 
 只做「版面 + 每帧刷新口径 + 新可视化」三件事，**底层一行不改**：
-  · 采集线程仍是 framelab.engines.hardware.HardwareEngine /
-    framelab.engines.presentmon.PresentMonBridge；
-  · 11 维归因仍是 framelab.analysis.SnapshotDiffInspector（原封不动）；
+  · 采集线程仍是 stuttertriage.engines.hardware.HardwareEngine /
+    stuttertriage.engines.presentmon.PresentMonBridge；
+  · 11 维归因仍是 stuttertriage.analysis.SnapshotDiffInspector（原封不动）；
   · 设置页 / CSV 导入导出 / ETW 清理 / 提权提醒 / 热键 等既有行为
-    继承自 framelab.ui.base_window.FrameLabWindowBase。
+    继承自 stuttertriage.ui.base_window.StutterTriageWindowBase。
 
 改进建议书（gemini-code-1793074763581）的落点：
   一、布局 → 左栏固定 240px 只放 5 张大号导航卡（navtabs.py），
@@ -39,7 +39,7 @@ from ..theme import (CURRENT_THEME, THEME_PRESETS, attach_shadow,
                      bind_globals as _bind_theme_globals)
 from ..utils import DIAG
 from ..winadmin import detect_data_source, make_sim_watermark
-from .base_window import FrameLabWindowBase
+from .base_window import StutterTriageWindowBase
 from .chart import MODE_FPS, MODE_MS
 from .diagnosis import ProfessionalTableDialog
 from .gauge import BottleneckBar, FpsCard, GradeBadge
@@ -58,7 +58,7 @@ except Exception:                       # pragma: no cover
 _bind_theme_globals(globals())
 
 
-class FrameLabWindow(FrameLabWindowBase):
+class StutterTriageWindow(StutterTriageWindowBase):
     """左栏 5 张导航卡 + 右侧 QStackedWidget 五页主画布"""
 
     FRAME_POLL = 6                   # 重活节拍（≈200ms）
@@ -74,7 +74,7 @@ class FrameLabWindow(FrameLabWindowBase):
     #   ② 自动弹卡每 tick 触发一次全量 inspect；
     #   ③ 病历卡弹出后 selected_frame 一直锁定 → 每 tick 跟随刷新再算一次。
     # 会话越长（最多 10 万帧）、卡顿帧越多，单次耗时从几 ms 涨到几百 ms，
-    # 33ms 的 UI 定时器被彻底淹没 —— 用户看到的就是「FrameLab 自己卡住」。
+    # 33ms 的 UI 定时器被彻底淹没 —— 用户看到的就是「StutterTriage 自己卡住」。
     # 处理：横幅结论 ≥0.5s 一次、自动弹卡 ≥1s 一次、锁定卡跟随 ≥1s 一次
     # （1Hz 的数字刷新肉眼无感，归因算法本身一行未动）。
     DIAG_RENDER_INTERVAL = 0.5       # 顿挫横幅全量重算最小间隔（秒）
@@ -85,7 +85,7 @@ class FrameLabWindow(FrameLabWindowBase):
     # 版面
     # ================================================================
     def _init_ui(self):
-        self.setWindowTitle("FrameLab 1.0.4 · 游戏卡顿一站式体检台")
+        self.setWindowTitle("StutterTriage 1.0.4 · 游戏卡顿一站式体检台")
         self._apply_global_stylesheet()
         self._stat_cache = None
         self._last_rows = []
@@ -125,7 +125,7 @@ class FrameLabWindow(FrameLabWindowBase):
         # ---- 顶部：LOGO + 极小齿轮（极客入口全收进这里）----
         top = QHBoxLayout()
         top.setSpacing(6)
-        self.lbl_logo = QLabel("◈ FrameLab")
+        self.lbl_logo = QLabel("◈ StutterTriage")
         self.lbl_logo.setStyleSheet(
             "font-size: 17px; font-weight: bold; color: %s; letter-spacing: 1px;"
             % CURRENT_THEME.accent)
@@ -354,7 +354,7 @@ class FrameLabWindow(FrameLabWindowBase):
         """
         self.hw_panel = QWidget(self, Qt.WindowType.Window)
         self.hw_panel.setObjectName("HwPanel")
-        self.hw_panel.setWindowTitle("FrameLab · 设置与事件流")
+        self.hw_panel.setWindowTitle("StutterTriage · 设置与事件流")
         self.hw_panel.resize(820, 560)
         self.hw_panel.setMinimumSize(640, 420)
         hpl = QVBoxLayout(self.hw_panel)
@@ -663,7 +663,7 @@ class FrameLabWindow(FrameLabWindowBase):
         self.lbl_bn_advice.setText(bn.get("advice") or "")
 
         # ---- 顶部横幅 + 病历卡：严格顿挫判定（改进建议书 五）----
-        # 【v1.0.4 修「FrameLab 自己卡住」】inspect() 结尾的会话级归因是
+        # 【v1.0.4 修「StutterTriage 自己卡住」】inspect() 结尾的会话级归因是
         # O(全部帧 × 卡顿帧)、且缓存键含帧数（实时采集时永不命中），旧实现
         # 在顿挫期间每 33ms 全量重算（自动弹卡还会再算一遍），会话一长就把
         # UI 线程拖死。现在：横幅 ≥0.5s 重算一次；自动弹卡 ≥1s 至多一次；

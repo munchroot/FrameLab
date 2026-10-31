@@ -24,10 +24,10 @@ except Exception:
 
 import numpy as np                                              # noqa: E402
 
-from framelab import consts                                     # noqa: E402
-from framelab.analysis import FrameStore, SnapshotDiffInspector  # noqa: E402
-from framelab.models import FrameRecord, HardwareSnapshot       # noqa: E402
-from framelab import stats                                       # noqa: E402
+from stuttertriage import consts                                     # noqa: E402
+from stuttertriage.analysis import FrameStore, SnapshotDiffInspector  # noqa: E402
+from stuttertriage.models import FrameRecord, HardwareSnapshot       # noqa: E402
+from stuttertriage import stats                                       # noqa: E402
 
 FAILS = []
 
@@ -145,7 +145,7 @@ def test_vram_spill():
                  "GPU_DOWNCLOCK_MIN_BASE_MHZ", "GPU_DOWNCLOCK_MIN_3D_LOAD",
                  "GPU_CLK_DROP_RATIO"):
         check("%s 已登记 LIVE_CONST_NAMES" % name, name in consts.LIVE_CONST_NAMES)
-    from framelab import analysis
+    from stuttertriage import analysis
     check("GPU_CLK_DROP_RATIO 已改为 0.20", abs(consts.GPU_CLK_DROP_RATIO - 0.20) < 1e-9,
           str(consts.GPU_CLK_DROP_RATIO))
     check("analysis 侧取到热更新副本",

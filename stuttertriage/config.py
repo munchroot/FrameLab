@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""配置外部化：framelab_config.json 读写与阈值回落。"""
+"""配置外部化：stuttertriage_config.json 读写与阈值回落。"""
 
 import os
 import json
@@ -9,9 +9,9 @@ from .paths import app_dir
 
 
 # ==============================================================================
-# §9.5.1  阈值参数外部化 —— framelab_config.json
+# §9.5.1  阈值参数外部化 —— stuttertriage_config.json
 # ==============================================================================
-CONFIG_FILENAME = "framelab_config.json"
+CONFIG_FILENAME = "stuttertriage_config.json"
 
 
 
@@ -122,7 +122,7 @@ def default_config_dict():
 
 
 def config_path(base_dir=None):
-    """配置文件路径：默认与启动器 FrameLab.py 同目录（v4：见 framelab.paths）"""
+    """配置文件路径：默认与启动器 StutterTriage.py 同目录（v4：见 stuttertriage.paths）"""
     if base_dir is None:
         base_dir = app_dir()
     return os.path.join(base_dir, CONFIG_FILENAME)

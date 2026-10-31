@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-FrameLabWindowBase —— 从 FrameLab 3.2 单体工程原样迁移的可复用窗口逻辑。
+StutterTriageWindowBase —— 从 StutterTriage 3.2 单体工程原样迁移的可复用窗口逻辑。
 
 本模块承载与版面无关的行为层：设置页 / 主题热切换 / QSS /
 CSV 导入导出 / ETW 清理 / 提权提醒 / PresentMon 指引 / 热键接线 /
@@ -13,7 +13,7 @@ CSV 导入导出 / ETW 清理 / 提权提醒 / PresentMon 指引 / 热键接线 
   · `_build_events_tab()`   —— ⚡ 事件流表（引擎告警 + 手动打点的唯一历史视图）
 
 版面（_init_ui）与每帧刷新（_refresh_ui_inner）由子类
-framelab.ui.main_window.FrameLabWindow 重新实现（GamePP 风格）。
+stuttertriage.ui.main_window.StutterTriageWindow 重新实现（GamePP 风格）。
 """
 
 import os
@@ -50,12 +50,12 @@ from ..consts import bind_globals as _bind_const_globals
 _bind_const_globals(globals())
 
 
-class FrameLabWindowBase(QMainWindow):
-    """旧 FrameLab 3.2 主窗口中可复用的逻辑层（版面与每帧刷新由子类重写）。"""
+class StutterTriageWindowBase(QMainWindow):
+    """旧 StutterTriage 3.2 主窗口中可复用的逻辑层（版面与每帧刷新由子类重写）。"""
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("FrameLab 3.2 · 次世代掉帧研究工作台")
+        self.setWindowTitle("StutterTriage 3.2 · 次世代掉帧研究工作台")
         self.resize(1440, 940)
         self.setMinimumSize(1120, 760)
 
@@ -681,7 +681,7 @@ class FrameLabWindowBase(QMainWindow):
         try:
             self._refresh_ui_inner()
         except Exception as ex:
-            DIAG.report("FrameLabWindow._refresh_ui", ex)
+            DIAG.report("StutterTriageWindow._refresh_ui", ex)
             self._ui_error_count = getattr(self, "_ui_error_count", 0) + 1
             if self._ui_error_count <= 3:
                 try:
@@ -876,10 +876,10 @@ class FrameLabWindowBase(QMainWindow):
             if not stale:
                 QMessageBox.information(
                     self, "ETW 会话清理",
-                    "当前没有需要清理的残留 FrameLab ETW 会话。\n\n"
+                    "当前没有需要清理的残留 StutterTriage ETW 会话。\n\n"
                     "（本次操作不会影响正在进行的采集。）")
                 return
-            txt = ["即将停止 %d 个残留的 FrameLab ETW 会话：" % len(stale)]
+            txt = ["即将停止 %d 个残留的 StutterTriage ETW 会话：" % len(stale)]
             txt.extend("  - " + n for n in stale[:10])
             if len(stale) > 10:
                 txt.append("  ... 共 %d 个" % len(stale))
@@ -907,7 +907,7 @@ class FrameLabWindowBase(QMainWindow):
         live = self.pm_bridge.etw.session_name if self.pm_bridge else None
         mgr = EtwSessionManager()
         stopped = mgr.cleanup_stale(skip=live)
-        msg = ("已清理 %d 个残留 ETW 会话" % len(stopped)) if stopped else "当前没有残留的 FrameLab ETW 会话"
+        msg = ("已清理 %d 个残留 ETW 会话" % len(stopped)) if stopped else "当前没有残留的 StutterTriage ETW 会话"
         QMessageBox.information(self, "ETW 会话清理", msg)
 
     def _import_csv(self):
@@ -1097,7 +1097,7 @@ class FrameLabWindowBase(QMainWindow):
                                    else "▶ 开始采集")
 
     def _export_csv(self):
-        path, _ = QFileDialog.getSaveFileName(self, "导出当前帧与诊断数据", "framelab_record.csv", "CSV Files (*.csv)")
+        path, _ = QFileDialog.getSaveFileName(self, "导出当前帧与诊断数据", "stuttertriage_record.csv", "CSV Files (*.csv)")
         if not path:
             return
         try:
@@ -1259,9 +1259,9 @@ class FrameLabWindowBase(QMainWindow):
         self._admin_prompt_shown = True
         try:
             box = QMessageBox(self)
-            box.setWindowTitle("FrameLab · 权限提醒")
+            box.setWindowTitle("StutterTriage · 权限提醒")
             box.setIcon(QMessageBox.Icon.Information)
-            box.setText("建议以管理员身份运行 FrameLab")
+            box.setText("建议以管理员身份运行 StutterTriage")
             box.setInformativeText(
                 "非管理员模式下：\n"
                 "  · 以提权方式运行的游戏进程无法被追踪（显示为 <unknown>）\n"

@@ -18,7 +18,7 @@ sys.path.insert(0, ROOT)
 
 from PyQt6 import QtWidgets                       # noqa: E402
 
-import framelab.models as M                       # noqa: E402
+import stuttertriage.models as M                       # noqa: E402
 
 
 def pump(app, ms=120):
@@ -102,10 +102,10 @@ def main():
         app.setFont(QFont("Microsoft YaHei UI", 9))
     except Exception:
         pass
-    import FrameLab as F
-    from framelab import theme as T
+    import StutterTriage as F
+    from stuttertriage import theme as T
 
-    win = F.FrameLabWindow()
+    win = F.StutterTriageWindow()
     win.resize(1440, 900)
     win.show()
     pump(app, 200)

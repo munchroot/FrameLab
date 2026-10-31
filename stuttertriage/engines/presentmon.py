@@ -103,7 +103,7 @@ def find_presentmon_binary(explicit=None):
     多路径探测 PresentMon.exe（完全可移植，不含任何硬编码盘符/版本号）。
 
     【评审】原实现把某个桌面路径写死，换台机器就找不到；版本号也写死。
-    现在改为：显式指定 -> 环境变量 FRAMELAB_PRESENTMON -> 程序目录及其子目录
+    现在改为：显式指定 -> 环境变量 STUTTERTRIAGE_PRESENTMON -> 程序目录及其子目录
     -> **EXE 内置副本（PyInstaller `_MEIPASS/PresentMon`）** -> 各盘符常见安装
     位置（有限深度 glob） -> PATH。
 
@@ -114,7 +114,7 @@ def find_presentmon_binary(explicit=None):
     if explicit:
         return explicit if os.path.isfile(explicit) else None
 
-    env = os.environ.get("FRAMELAB_PRESENTMON", "").strip()
+    env = os.environ.get("STUTTERTRIAGE_PRESENTMON", "").strip()
     if env and os.path.isfile(env):
         return env
 
@@ -410,7 +410,7 @@ class PresentMonBridge(threading.Thread):
                         if not lost_reported:
                             lost_reported = True
                             self._status(False, "⚠ 检测到 ETW 事件丢失（数据可能不完整），"
-                                                "建议以管理员身份运行 FrameLab")
+                                                "建议以管理员身份运行 StutterTriage")
                     elif "elevated privilege" in low:
                         self._status(True, "⚠ PresentMon 未以管理员权限运行："
                                            "仅能完整追踪当前账户的进程")

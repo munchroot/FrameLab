@@ -19,13 +19,13 @@ import json
 import time
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-sys.path.insert(0, r"F:\Desktop\不完美项目\VRAMWatch")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 from PyQt6 import QtWidgets
 from PyQt6.QtGui import QKeySequence
 
-import FrameLab as FL
+import StutterTriage as FL
 
 fails = []
 
@@ -40,7 +40,7 @@ def _free_combo(preferred):
     """
     挑一个当前系统**没有被占用**的组合键。
 
-    【为什么需要】用户可能正开着 FrameLab（它按配置注册了全局热键），
+    【为什么需要】用户可能正开着 StutterTriage（它按配置注册了全局热键），
     或者其它软件占用了 Ctrl+Shift+P 之类常见组合 —— 固定使用某个组合
     会让测试在环境变化时假失败。这里用 RegisterHotKey 探测后立即释放。
     """
@@ -115,7 +115,7 @@ print("=" * 72)
 print("T3) 运行时主题热切换（UI 实际变色）")
 print("=" * 72)
 app = QtWidgets.QApplication(sys.argv)
-win = FL.FrameLabWindow()
+win = FL.StutterTriageWindow()
 
 for key, th in FL.THEME_PRESETS.items():
     win._apply_theme(th.copy(), persist=False)
@@ -141,7 +141,7 @@ print()
 print("=" * 72)
 print("T4) 主题 / 图表样式持久化")
 print("=" * 72)
-cfg_path = os.path.join(os.path.dirname(os.path.abspath(FL.__file__)), "framelab_config.json")
+cfg_path = os.path.join(os.path.dirname(os.path.abspath(FL.__file__)), "stuttertriage_config.json")
 try:
     backup = open(cfg_path, encoding="utf-8").read()
 except Exception:
@@ -176,7 +176,7 @@ check("非法组合被拒", FL.parse_hotkey("F9+F9") is None)
 check("空串被拒", FL.parse_hotkey("") is None)
 
 # 改键 → 重新注册（关键：Windows 同 id 不能替换）
-# 组合键动态挑选：用户可能正开着 FrameLab（占用了它配置里的热键），
+# 组合键动态挑选：用户可能正开着 StutterTriage（占用了它配置里的热键），
 # 或其它软件占用常见组合 —— 固定组合会让本测试假失败。
 if win._hotkey:
     combo1 = _free_combo(("Ctrl+Shift+P", "Ctrl+Shift+F11", "Ctrl+Alt+F10",

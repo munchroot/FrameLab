@@ -1,10 +1,10 @@
-# FrameLab UI 层 功能 / 接线 清单（重写前侦察）
+# StutterTriage UI 层 功能 / 接线 清单（重写前侦察）
 
 > **状态（v4.1 已完成）**：本文是重写**之前**的对照清单，用于保证「不丢行为」。
 > 其中描述 v3.2 版面的部分（左侧栏按钮堆砌、四张分位卡、双模式图表、
 > 11 行抽屉等）已被《改进建议书》要求的新版面取代；**行为契约**部分
 > （设置页 / CSV 导入导出 / ETW 二次确认 / 提权提醒 / 热键 / 数据源三态 /
-> 主题热切换 / 关闭流程）已原样迁移到 `framelab/ui/base_window.py`，
+> 主题热切换 / 关闭流程）已原样迁移到 `stuttertriage/ui/base_window.py`，
 > 并由 `tests/` 下的 10 个脚本守护。旧代码已按「清理过时文件」删除，
 
 >
@@ -13,8 +13,8 @@
 > （`ui/pages.py`：帧率总览 / CPU / 显卡与显存 / 内存与磁盘 / 网络与环境）；
 > `ui/accordion.py` 已删除。同时修正 4 处算法/坐标轴误报，见 `README.md` §3.2。
 
-目标文件：`framelab/` 包（`analysis.py` / `stats.py` / `ui/` 等）
-用途：UI 层（`FrameLabWindow` 4143–7305 + 控件 3731–4142 + 引导 8041–8078）即将拆分重写；本文件是"不丢行为"的对照清单。数据/引擎层保留不动。
+目标文件：`stuttertriage/` 包（`analysis.py` / `stats.py` / `ui/` 等）
+用途：UI 层（`StutterTriageWindow` 4143–7305 + 控件 3731–4142 + 引导 8041–8078）即将拆分重写；本文件是"不丢行为"的对照清单。数据/引擎层保留不动。
 
 ## 0. 侦察方法与证据等级
 
@@ -34,12 +34,12 @@
 
 ## 1. 构造 / 析构
 
-### 1.1 `FrameLabWindow.__init__`（4145–4205）逐步顺序
+### 1.1 `StutterTriageWindow.__init__`（4145–4205）逐步顺序
 
 | # | 行号 | 动作 | 说明 / 契约 |
 |---|---|---|---|
 | 1 | 4146 | `super().__init__()` | `QMainWindow` |
-| 2 | 4147 | `setWindowTitle("FrameLab 3.2 · 次世代掉帧研究工作台")` | |
+| 2 | 4147 | `setWindowTitle("StutterTriage 3.2 · 次世代掉帧研究工作台")` | |
 | 3 | 4148–4149 | `resize(1440, 940)`；`setMinimumSize(1120, 760)` | 几何不落盘（无 QSettings） |
 | 4 | 4151 | `self.store = FrameStore()` | 引擎层，重写须原样保留 |
 | 5 | 4152 | `self.q = BoundedQueue(maxsize=60000)` | 生产者 → UI 唯一消费者 |
@@ -96,7 +96,7 @@
 | `btn_pm_dir` | `打开 PresentMon 目录` | `定位并说明如何获取 PresentMon` | `_on_open_presentmon_dir` L4798 / L6698 |
 
 次级按钮为 2×2 栅格（`QGridLayout`，L4751–4762，顺序 sim/import/export/clean）。
-常量文案：`lbl_logo="◈ FrameLab 3.2"`(L4717)、`lbl_logo_sub="掉帧研究工作台"`(L4720)、`lbl_engine_badge="● 正在探测 PresentMon 引擎…"`(L4726)、`lbl_target_caption="追踪进程"`(L4734)、`progress_import`(L4800, 默认隐藏)、`lbl_hotkey`/`lbl_pm_hint`(L4789/4793)、对象名 `Sidebar`(L4709，宽 268–340)。
+常量文案：`lbl_logo="◈ StutterTriage 3.2"`(L4717)、`lbl_logo_sub="掉帧研究工作台"`(L4720)、`lbl_engine_badge="● 正在探测 PresentMon 引擎…"`(L4726)、`lbl_target_caption="追踪进程"`(L4734)、`progress_import`(L4800, 默认隐藏)、`lbl_hotkey`/`lbl_pm_hint`(L4789/4793)、对象名 `Sidebar`(L4709，宽 268–340)。
 
 ### 2.2 主展示区（4807–5083）
 
@@ -115,7 +115,7 @@
 | `diff_drawer`(#DrawerCard, 默认 `setVisible(False)` L4984) | 抽屉头 `lbl_diff_title`(`【病灶对比诊断卡】 点击图表波峰锁定对比` L4990)、`lbl_baseline_info`、`btn_reset`(`复位基准` L4997)、`btn_close_diff`(`✕ 收起`, tooltip `收起诊断抽屉（再次点击图表尖峰可重新展开）` L5002) | `_reset_inspect` L4998/5293；`_on_close_diff_drawer` L5003/5582 |
 | `table_diff` | `QTableWidget(11, 5)` L5010（**11 行 × 5 列，不是 11 列**） | `_render_diff_card` L5921 |
 | `geek_panel`(#GeekPanel, 宽 330–430) | `lbl_geek_title="🔥 极客热力图 · CPU 各核负载"`(L5034)、`heat_geek=CpuHeatmapGrid(cpu_count())`(L5038)、`lbl_geek_probe_title="🔬 新探针实时读数"`(L5041)、`probe_bar=ProbeReadoutBar()`(L5045) | `_refresh_geek_panel` L6069 |
-| `hw_panel` | 顶层独立窗口 `Qt.WindowType.Window`，标题 `FrameLab · 进阶硬件面板`，resize(1100,720)，min(880,540)，`installEventFilter(self)` L5082 | |
+| `hw_panel` | 顶层独立窗口 `Qt.WindowType.Window`，标题 `StutterTriage · 进阶硬件面板`，resize(1100,720)，min(880,540)，`installEventFilter(self)` L5082 | |
 | `hw_tabs` | 6 个页签（顺序即文字）：`🧠 CPU 热力图`、`🎮 显存监视`、`💾 内存换入`、`✨ 着色器与引擎`、`⚡ 事件流`、`⚙ 设置`（L5073–5079） | |
 | `tab_cpu` | `lbl_cpu_summary`(L5147)、`heat_cpu`+`set_max_mhz(max(per_core_max_mhz(cpu_count()) or [4000]))`(L5152–5155)、色标 chips `空闲/轻载/中载/重载/拥堵`(L5167)、`块底部细条 = 频率（相对基频）`(L5177)、**`self.core_widgets = []`（兼容占位，L5184）** | `_refresh_hardware_tabs` |
 | `tab_vram` | `lbl_vram_info`(L5191)、`table_vram` 表头 `["进程名","本地显存","溢出到内存","专用计数"]`(L5195) | |
@@ -175,7 +175,7 @@
 | 功能 | 入口 | 实现要点 |
 |---|---|---|
 | 启动提权提醒 | `_schedule_admin_prompt` L6554 | `is_admin()` 为真则 `return`；否则 `QTimer.singleShot(700, ...)` |
-| 提醒弹窗 | `_show_admin_prompt` L6563 | 标题 `FrameLab · 权限提醒`；正文 `建议以管理员身份运行 FrameLab`；informative L6581–6584；按钮 `🛡 以管理员身份重启`(Accept) / `继续以当前权限`(Reject, 默认)；`WA_DeleteOnClose`；`box.open()` **非模态**；引用存 `self._admin_dialog` L6593；`_admin_prompt_shown` 去重 L6572 |
+| 提醒弹窗 | `_show_admin_prompt` L6563 | 标题 `StutterTriage · 权限提醒`；正文 `建议以管理员身份运行 StutterTriage`；informative L6581–6584；按钮 `🛡 以管理员身份重启`(Accept) / `继续以当前权限`(Reject, 默认)；`WA_DeleteOnClose`；`box.open()` **非模态**；引用存 `self._admin_dialog` L6593；`_admin_prompt_shown` 去重 L6572 |
 | 提权重启 | `_on_admin_prompt_choice` L6597 | `relaunch_as_admin()` L7849（`ShellExecuteW(None,"runas",exe,params,os.getcwd(),1)`；返回 >32 为成功）→ statusBar `正在以管理员身份重启…` → `self.close()`；失败弹 `提权失败` L6610–6613 |
 | PresentMon 指引 | `_update_presentmon_hint` L6617 | 优先配置路径 → `find_presentmon_binary()` → 文案 `PresentMon: %s`(绿) / `未找到 PresentMon.exe（模拟模式）—— `(WARN) |
 | 打开目录 | `_on_open_presentmon_dir` L6698 | `open_dir_in_explorer(presentmon_dir())` L7906/7896；失败弹 `PresentMon` 对话框 |
@@ -186,9 +186,9 @@
 
 ### 2.7 ETW 清理
 
-1. `_clean_etw_confirmed` L6178：`live = self.pm_bridge.etw.session_name`(L6188)；`stale = [n for n in EtwSessionManager.list_sessions() if n.lower().startswith(PM_SESSION_PREFIX.lower()) and n != live]`(L6189–6191)；无残留 → 信息框 `ETW 会话清理` / `当前没有需要清理的残留 FrameLab ETW 会话。\n\n（本次操作不会影响正在进行的采集。）`(L6193–6196)；有残留 → `QMessageBox.question`，标题 `确认清理 ETW 残留`，正文由 L6198–6205 拼装（首行 `即将停止 %d 个残留的 FrameLab ETW 会话：`、逐条 `  - <name>`（最多 10 条，超出 `  ... 共 %d 个`）、`当前正在使用的会话 %s 会被自动跳过，不受影响。`、`停掉这些会话不会影响其它软件的 ETW 会话。`），默认按钮 No。
-2. `_clean_etw` L6216：`EtwSessionManager().cleanup_stale(skip=live)` L6225 → 信息框 `已清理 %d 个残留 ETW 会话` / `当前没有残留的 FrameLab ETW 会话`(L6226–6227)。
-3. 前缀常量 `PM_SESSION_PREFIX = "FrameLab_PM_"`(L542)。
+1. `_clean_etw_confirmed` L6178：`live = self.pm_bridge.etw.session_name`(L6188)；`stale = [n for n in EtwSessionManager.list_sessions() if n.lower().startswith(PM_SESSION_PREFIX.lower()) and n != live]`(L6189–6191)；无残留 → 信息框 `ETW 会话清理` / `当前没有需要清理的残留 StutterTriage ETW 会话。\n\n（本次操作不会影响正在进行的采集。）`(L6193–6196)；有残留 → `QMessageBox.question`，标题 `确认清理 ETW 残留`，正文由 L6198–6205 拼装（首行 `即将停止 %d 个残留的 StutterTriage ETW 会话：`、逐条 `  - <name>`（最多 10 条，超出 `  ... 共 %d 个`）、`当前正在使用的会话 %s 会被自动跳过，不受影响。`、`停掉这些会话不会影响其它软件的 ETW 会话。`），默认按钮 No。
+2. `_clean_etw` L6216：`EtwSessionManager().cleanup_stale(skip=live)` L6225 → 信息框 `已清理 %d 个残留 ETW 会话` / `当前没有残留的 StutterTriage ETW 会话`(L6226–6227)。
+3. 前缀常量 `PM_SESSION_PREFIX = "StutterTriage_PM_"`(L542)。
 
 ### 2.8 CSV 导入 / 导出
 
@@ -201,7 +201,7 @@
 - `finally` 必恢复 `is_paused=False` + 按钮文案（L6412–6415，注释标 `【D1】`）。
 - 提示框：成功 `导入成功` + 长文 L6403–6408；失败 `导入失败`/`未解析出任何有效帧。\n（当前会话数据已保留，未做任何改动。）`、`读取失败`、`格式错误`。
 
-**导出** `_export_csv` L6417–6443：`getSaveFileName(..., "framelab_record.csv", "CSV Files (*.csv)")`；表头（13 列，verbatim L6426–6429）：`Index, TimeInSeconds, Application, MsBetweenPresents, FPS, MsGPUBusy, MsCPUBusy, GPUBusyRatio, CPU0_Usage, VRAM_NonLocal_MB, PageIn_MBps, CacheNewFiles, DataSource`；每帧 `store.snapshot_for(fr.hw_seq)` 取硬件值（缺则 0）；`DataSource` 列写 `self._data_source`。文案 `导出成功`/`已成功导出 %d 帧对账数据！`、`导出失败`/`写入文件出错: %s`。
+**导出** `_export_csv` L6417–6443：`getSaveFileName(..., "stuttertriage_record.csv", "CSV Files (*.csv)")`；表头（13 列，verbatim L6426–6429）：`Index, TimeInSeconds, Application, MsBetweenPresents, FPS, MsGPUBusy, MsCPUBusy, GPUBusyRatio, CPU0_Usage, VRAM_NonLocal_MB, PageIn_MBps, CacheNewFiles, DataSource`；每帧 `store.snapshot_for(fr.hw_seq)` 取硬件值（缺则 0）；`DataSource` 列写 `self._data_source`。文案 `导出成功`/`已成功导出 %d 帧对账数据！`、`导出失败`/`写入文件出错: %s`。
 **没有 JSON 导出**（全文件无 `json.dump` 到用户文件；`json` 仅用于 `Config`）。
 
 ### 2.9 模拟流 / 进程选择 / 暂停 / 复位
@@ -607,9 +607,9 @@ CURRENT_THEME (L346, = THEME_DEEP_SPACE)
 
 | 项 | 值 | 行号 |
 |---|---|---|
-| 文件名 | `CONFIG_FILENAME = "framelab_config.json"` | 7341 |
-| 位置 | `config_path()` = `os.path.dirname(os.path.abspath(__file__))` + 文件名 → **与 FrameLab.py 同目录**，非 `%APPDATA%` | 7405–7409 |
-| 日志 | `~/.framelab/framelab_diag.log`（`DiagLog`，`main()` 内实例化；模块级默认 `DIAG = DiagLog(enabled=False)` L640） | 8056–8060 / 640 |
+| 文件名 | `CONFIG_FILENAME = "stuttertriage_config.json"` | 7341 |
+| 位置 | `config_path()` = `os.path.dirname(os.path.abspath(__file__))` + 文件名 → **与 StutterTriage.py 同目录**，非 `%APPDATA%` | 7405–7409 |
+| 日志 | `~/.stuttertriage/stuttertriage_diag.log`（`DiagLog`，`main()` 内实例化；模块级默认 `DIAG = DiagLog(enabled=False)` L640） | 8056–8060 / 640 |
 | 阈值键 → 全局量 | `CONFIG_SCHEMA`（12 项：[BOUNDARY] L7345–7370）：`spill_threshold→SPILL_THRESHOLD(int)`、`freq_drop_ratio→FREQ_DROP_RATIO(float)`、`cache_burst_files→CACHE_BURST_FILES(int)`、`cpu0_jam_threshold→CPU0_JAM_THRESHOLD(float)`、`cpu0_idle_others→CPU0_IDLE_OTHERS`、`migrate_freq_gap→MIGRATE_FREQ_GAP`、`pm_buffer_size→PM_BUFFER_SIZE(int,2 的幂)`、`baseline_window→BASELINE_WINDOW`、`baseline_ema→BASELINE_EMA`、`baseline_spike_ratio→BASELINE_SPIKE_RATIO`、`baseline_max_spike_frac→BASELINE_MAX_SPIKE_FRAC`、`max_hw_age→MAX_HW_AGE` | |
 | 非阈值键 | `CONFIG_EXTRA_KEYS = ("hotkey","presentmon_path","blacklist_extra","theme","chart_style","custom_bg")` | 7373 |
 | 默认值 | `DEFAULT_CONFIG` L7376–7395（`hotkey:"Ctrl+F9"`、`theme:"deepspace"`、`chart_style:"capframex"`、`custom_bg:""`） | |
@@ -682,7 +682,7 @@ CURRENT_THEME (L346, = THEME_DEEP_SPACE)
 
 | 变更 | 位置 | 说明 |
 |---|---|---|
-| 品牌/版本 | `framelab/__init__.py`、`ui/main_window.py`、`build_tools/version_info.txt` | 名称固定 `FrameLab`，版本 `1.0.0`；窗口标题 `FrameLab 1.0.0 · 游戏卡顿一站式体检台`；EXE 属性 `1.0.0.0` |
+| 品牌/版本 | `stuttertriage/__init__.py`、`ui/main_window.py`、`build_tools/version_info.txt` | 名称固定 `StutterTriage`，版本 `1.0.0`；窗口标题 `StutterTriage 1.0.0 · 游戏卡顿一站式体检台`；EXE 属性 `1.0.0.0` |
 | 版面零抖动 | `ui/widgets.ElidedLabel` + `ui/main_window.BANNER_HEIGHT` + `ui/diagnosis.MiniDiagnosisCard.show_idle()` | 横幅固定 96px、所有动态文案单行省略；病历卡常驻 110px 占位；4 张卡高度锁死 |
 | 文案瘦身 | `ui/main_window.py`、`ui/pages.py`、`ui/gauge.FpsCard`、`stats.bottleneck` | 删 `lbl_grade_sub` / `lbl_logo_sub` / `lbl_nav_caption` / `SUBTITLE` / `lbl_subtitle` / `lbl_hint`；卡片标题去英文括注；结论改短句 |
 | CPU 频率/功率双折线 | `ui/cpu_trend.py`（新）+ `ui/pages.CpuPage.trend` + `main_window._push_cpu_trend` | 固定 104px、无坐标轴、双线各自归一化、按 `hw.seq` 去重；功率估算一律 `≈` |
@@ -735,7 +735,7 @@ CURRENT_THEME (L346, = THEME_DEEP_SPACE)
 
 | 变更 | 位置 | 说明 |
 |---|---|---|
-| 「FrameLab 自己卡住」根治 | `ui/main_window.py` | `inspect()` 会话级归因缓存键含帧数 → 实时采样永不命中；顿挫横幅 / 自动弹卡 / 锁定卡跟随三条 30Hz 路径改为 ≥0.5 s / ≥1 s / ≥1 s 节流（`DIAG_RENDER_INTERVAL`、`AUTO_POPUP_INTERVAL`、`DIAG_FOLLOW_INTERVAL`）；`_page_ctx` 复用 `visible_frames`。10 万帧 + 14% 卡顿帧：p50 35.8–39.2 ms → 3.2–3.3 ms（×11–12.4），算法与文案零改动 |
+| 「StutterTriage 自己卡住」根治 | `ui/main_window.py` | `inspect()` 会话级归因缓存键含帧数 → 实时采样永不命中；顿挫横幅 / 自动弹卡 / 锁定卡跟随三条 30Hz 路径改为 ≥0.5 s / ≥1 s / ≥1 s 节流（`DIAG_RENDER_INTERVAL`、`AUTO_POPUP_INTERVAL`、`DIAG_FOLLOW_INTERVAL`）；`_page_ctx` 复用 `visible_frames`。10 万帧 + 14% 卡顿帧：p50 35.8–39.2 ms → 3.2–3.3 ms（×11–12.4），算法与文案零改动 |
 | 设置面板瘦身 | `ui/main_window.py`、`ui/base_window.py` | 6 页签 → 2 页签（⚙ 设置 / ⚡ 事件流）；删 4 个 v3.2 遗留页签（CPU 热力图 / 显存监视 / 内存换入 / 着色器与引擎）及其对已丢失的 `_sync_table` 的每 tick 调用；齿轮菜单删「展开进阶硬件面板」「打开 PresentMon 目录」与一个死控件 |
 | 设置页人话化 | `config.py`、`ui/base_window.py` | `CONFIG_LABELS`（中文名 + 单位·默认）+ `CONFIG_GROUPS`（显存 / CPU / 着色器 / 采集 / 平稳基线·进阶）驱动表单；原始键名与解释进 tooltip；未登记键有兜底表单 |
 | 阈值保存真生效 | `ui/base_window.py`、`config.py` | 保存 / 恢复默认 / 重新载入三处 `apply_to_globals(globals())` → `apply_to_globals()`（广播到 consts/engines/analysis/pages）；恢复默认改为先广播再回填输入框 |

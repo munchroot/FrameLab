@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-FrameLab 1.0.x 回归：版面零抖动 + 文案瘦身 + CPU 折线 + 品牌/版本 +
+StutterTriage 1.0.x 回归：版面零抖动 + 文案瘦身 + CPU 折线 + 品牌/版本 +
 v1.0.4「设置按钮瘦身 + 诊断节流（根治自己卡住）」。
 
 【这份测试盯的是「用户看得见 / 用户感觉得到」的几条】
@@ -9,11 +9,11 @@ v1.0.4「设置按钮瘦身 + 诊断节流（根治自己卡住）」。
   二、装饰性灰字已删除（不存在的属性必须真的不存在，避免有人"顺手加回来"）；
   三、CPU 页的频率/功率双折线：按快照 seq 去重、估算值必须带 est 标记、
       功率探针在无功率计的机器上必须退化为「估算」而不是编造实测；
-  四、品牌与版本：FrameLab 1.0.4；
+  四、品牌与版本：StutterTriage 1.0.4；
   五、**设置按钮里的老东西清干净**（只剩设置 + 事件流两个页签，
       CpuHeatmapGrid / heat_color / _sync_table 那一批死代码全删）；
   六、**诊断全量重算被节流**（60 tick 内 inspect ≤3 次，而不是每 tick 一次）——
-      这是「FrameLab 自己卡住」的回归闸门。
+      这是「StutterTriage 自己卡住」的回归闸门。
 
 运行：python tests\\test_v1_layout.py
 """
@@ -29,13 +29,13 @@ sys.path.insert(0, ROOT)
 from PyQt6 import QtWidgets                      # noqa: E402
 from PyQt6.QtCore import Qt                      # noqa: E402
 
-import framelab.models as M                      # noqa: E402
-import framelab                                  # noqa: E402
-import framelab.analysis as analysis             # noqa: E402
-import framelab.config as F                      # noqa: E402
-from framelab.ui.main_window import FrameLabWindow   # noqa: E402
-from framelab.ui.widgets import ElidedLabel      # noqa: E402
-from framelab.ui.cpu_trend import CpuTrendChart  # noqa: E402
+import stuttertriage.models as M                      # noqa: E402
+import stuttertriage                                  # noqa: E402
+import stuttertriage.analysis as analysis             # noqa: E402
+import stuttertriage.config as F                      # noqa: E402
+from stuttertriage.ui.main_window import StutterTriageWindow   # noqa: E402
+from stuttertriage.ui.widgets import ElidedLabel      # noqa: E402
+from stuttertriage.ui.cpu_trend import CpuTrendChart  # noqa: E402
 
 _time = time
 
@@ -106,12 +106,12 @@ def wait_stable(app, win, timeout_ms=2000):
 
 # ==============================================================================
 def test_brand():
-    print("== 1. 品牌与版本：FrameLab 1.0.4 ==")
+    print("== 1. 品牌与版本：StutterTriage 1.0.4 ==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
-    check("__version__ = 1.0.4", framelab.__version__ == "1.0.4", framelab.__version__)
+    win = StutterTriageWindow()
+    check("__version__ = 1.0.4", stuttertriage.__version__ == "1.0.4", stuttertriage.__version__)
     title = win.windowTitle()
-    check("窗口标题 = FrameLab 1.0.4 …", title.startswith("FrameLab 1.0.4"), title)
+    check("窗口标题 = StutterTriage 1.0.4 …", title.startswith("StutterTriage 1.0.4"), title)
     check("标题里没有旧品牌「卡顿减减」", "卡顿减减" not in title, title)
     check("侧栏 LOGO 也没有旧品牌", "卡顿减减" not in win.lbl_logo.text(), win.lbl_logo.text())
     with open(os.path.join(ROOT, "build_tools", "version_info.txt"), "r", encoding="utf-8") as f:
@@ -126,7 +126,7 @@ def test_brand():
 def test_no_layout_shift():
     print("== 2. 版面零抖动：空载 → 有数据 → 弹病历卡 → 关病历卡 ==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     win.resize(1440, 900)
     win.show()
     g_empty = wait_stable(app, win)
@@ -151,7 +151,7 @@ def test_no_layout_shift():
         check("版面不变：%s" % tag, not diffs, str(diffs) if diffs else "")
 
     check("横幅高度锁死 = BANNER_HEIGHT",
-          g_empty["banner"][1] == FrameLabWindow.BANNER_HEIGHT, str(g_empty["banner"]))
+          g_empty["banner"][1] == StutterTriageWindow.BANNER_HEIGHT, str(g_empty["banner"]))
     check("病历卡常驻（不是 show/hide 式）", win.pages[0].diag_card.isVisible())
     check("病历卡高度恒定 110", win.pages[0].diag_card.height() == 110,
           str(win.pages[0].diag_card.height()))
@@ -188,7 +188,7 @@ def test_elided():
 def test_gray_text_removed():
     print("== 4. 文案瘦身：装饰性灰字真的删掉了 ==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     for attr in ("lbl_grade_sub", "lbl_logo_sub", "lbl_nav_caption"):
         check("主窗口不再有 %s" % attr, not hasattr(win, attr))
     for idx, page in enumerate(win.pages):
@@ -218,10 +218,15 @@ def test_gray_text_removed():
 def test_cpu_trend():
     print("== 5. CPU 频率/功率双折线 ==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     win.resize(1440, 900)
     win.show()
     pump(app, 200)
+    # 【修竞态】必须停掉 UI/进程定时器：否则硬件心跳会在两条断言之间推入新快照，
+    # 让下方「同一 seq 只取一个点」变成偶发失败（11 -> 12）。
+    win.ui_timer.stop()
+    win.proc_timer.stop()
+    pump(app, 30)
     page = win.pages[1]
     trend = page.trend
     check("CPU 页挂着 CpuTrendChart", isinstance(trend, CpuTrendChart))
@@ -248,16 +253,28 @@ def test_cpu_trend():
     check("同一快照 seq 只取一个点", len(trend.samples()[0]) == n_before,
           "%d -> %d" % (n_before, len(trend.samples()[0])))
 
-    from framelab.probes import CpuPowerProbe
+    from stuttertriage.probes import CpuPowerProbe
     probe = CpuPowerProbe()
     watts, est, src = probe.read(4200.0, 4600.0, 45.0)
-    check("功率探针给出数值", watts is not None and watts > 0, "%.1fW src=%s" % (watts or -1, src))
+    # 【跨机型契约】不同机器取数路径不同：
+    #   pdh      = 本机有真实功率计数器（笔记本/品牌机），允许读到 0
+    #   estimate = 没有实测源 → 必须给出正数估算
+    #   none     = 连估算都做不了 → 必须 None
+    if src == "pdh":
+        ok_w = watts is not None and watts >= 0.0
+    elif src == "estimate":
+        ok_w = watts is not None and watts > 0
+    else:
+        ok_w = watts is None
+    check("功率探针返回合法值（按取数路径）", ok_w, "%.1fW src=%s" % (watts or -1, src))
     check("无功率计时必须标估算", (est is True) if src == "estimate" else True,
           "est=%s src=%s" % (est, src))
     check("估算值不超过 TDP 上限", watts is None or watts <= probe.tdp_hint + 0.01,
           "%.1f <= %.1f" % (watts or 0, probe.tdp_hint))
     empty = probe.read(0.0, 0.0, 0.0)
-    check("没有 CPU 数据时返回 None（不编数字）", empty[0] is None, str(empty))
+    # 【跨机型契约】无 CPU 数据时：没有实测源就必须 None（绝不编数字）；
+    # 若本机有真实功率计数器，返回实测值是同样正确的行为。
+    check("没有 CPU 数据时不编数字", empty[0] is None or empty[2] == "pdh", str(empty))
     probe.close()
     win.close()
     win.deleteLater()
@@ -268,7 +285,7 @@ def test_legacy_panel_gone():
     """§6 v1.0.4：设置按钮里的老东西必须清干净（只留设置 + 事件流）"""
     print("== 6. 设置按钮瘦身：旧硬件页签 / 死代码全部移除 ==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     pump(app, 60)
 
     tabs = [win.hw_tabs.tabText(i) for i in range(win.hw_tabs.count())]
@@ -280,7 +297,7 @@ def test_legacy_panel_gone():
                  "lbl_mem_summary", "lbl_shader_status", "core_widgets"):
         check("旧面板控件 %s 已删除" % name, not hasattr(win, name))
 
-    import framelab.ui.widgets as W
+    import stuttertriage.ui.widgets as W
     check("CpuHeatmapGrid 已从 widgets 删除", not hasattr(W, "CpuHeatmapGrid"))
     check("heat_color/_text_on 一并删除",
           not hasattr(W, "heat_color") and not hasattr(W, "_text_on"))
@@ -325,7 +342,7 @@ def test_settings_grouped():
     print("== 6b. 设置页人话化 + 阈值保存真的生效 ==")
     import tempfile
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     pump(app, 60)
 
     cfg = F.CONFIG_SCHEMA
@@ -346,9 +363,9 @@ def test_settings_grouped():
           win.cfg_edits["spill_threshold"].toolTip()[:40])
 
     # ---- 保存必须广播到真正参与判定的模块（v1.0.4 修：以前只改本模块副本）----
-    import framelab.consts as C
-    import framelab.engines.hardware as HW
-    import framelab.analysis as AN
+    import stuttertriage.consts as C
+    import stuttertriage.engines.hardware as HW
+    import stuttertriage.analysis as AN
     tmp = tempfile.mkdtemp(prefix="fl_cfg_")
     old_path = win._ux_config.path if win._ux_config is not None else None
     old_spill = C.SPILL_THRESHOLD
@@ -356,7 +373,7 @@ def test_settings_grouped():
     try:
         if win._ux_config is None:
             win._ux_config = F.Config()
-        win._ux_config.path = os.path.join(tmp, "framelab_config.json")
+        win._ux_config.path = os.path.join(tmp, "stuttertriage_config.json")
         win.cfg_edits["spill_threshold"].setText(str(32 << 20))
         win.cfg_edits["cpu0_jam_threshold"].setText("88.5")
         win._on_save_thresholds()
@@ -381,7 +398,7 @@ def test_settings_grouped():
                if k not in [x for _t, _d, ks in F.CONFIG_GROUPS for x in ks]]) == 0)
 
     # ---- 主题下拉框必须跟随真正生效的主题（v1.0.4 顺手修）----
-    from framelab import theme as T
+    from stuttertriage import theme as T
     before = T.CURRENT_THEME
     try:
         win._apply_theme(T.THEME_DEEP_SPACE.copy(), persist=False)
@@ -402,9 +419,9 @@ def test_settings_grouped():
 
 def test_diag_throttle():
     """§6c v1.0.4：诊断全量重算必须被节流（否则 10 万帧会话把 UI 拖死）"""
-    print("== 6c. 「FrameLab 自己卡住」回归：inspect 节流 ==")
+    print("== 6c. 「StutterTriage 自己卡住」回归：inspect 节流 ==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     win.resize(1440, 900)
     win.show()
     add_frames(win, 0, 3000, hw_every=24)
@@ -458,7 +475,7 @@ def test_manual_start_resample():
     """§6d「默认不采集 + 清空重采」：启动后手动点开始才收帧；清空后曲线从 0 重来"""
     print("== 6d. 手动开始采集 + 清空重采 ==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     win.resize(1440, 900)
     win.show()
     pump(app, 60)
@@ -533,8 +550,8 @@ def test_power_fields():
 
 def test_spike_denoise():
     print("== 8. 极值去噪：单帧尖峰不许顶飞「最高帧」与折线 Y 轴 ==")
-    from framelab.stats import window_stats
-    from framelab.ui.chart import MODE_FPS, MODE_MS, FpsChart   # noqa: F401
+    from stuttertriage.stats import window_stats
+    from stuttertriage.ui.chart import MODE_FPS, MODE_MS, FpsChart   # noqa: F401
 
     def mk(fts, idx0=0):
         return [M.FrameRecord(idx0 + i, i * 0.01, time.time(), "T.exe", 1, ft)
@@ -575,7 +592,7 @@ def test_spike_denoise():
 def test_diag_consistency():
     print("== 9. 病历卡与横幅不许互相打脸 ==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     win.resize(1440, 900)
     win.show()
     pump(app, 200)
@@ -604,8 +621,8 @@ def test_diag_consistency():
           win.diag_card.render_mode() == "idle" and win._diag_strict is None)
 
     # 横幅文案不再出现「刚才卡顿原因：刚才…」这种重复
-    from framelab.ui.plain import explain
-    from framelab.models import DiffRow
+    from stuttertriage.ui.plain import explain
+    from stuttertriage.models import DiffRow
     row = DiffRow("显存溢出", "7.9 GB", "5.1 GB", "+2.8 GB", "爆显存", "DANGER")
     txt = explain([row])["text"]
     check("横幅有原因与做法", "卡顿" in txt and "👉" in txt, txt)
@@ -625,15 +642,15 @@ def test_skin_persist():
     【为什么要这条】Config.update() 原来只合并 CONFIG_SCHEMA（纯阈值），
     theme / chart_style / custom_bg 写进文件后读回来**直接被丢掉**，
     于是每次重启都回落到默认深色。这里用**临时文件**做全链路回归，
-    绝不碰用户的 framelab_config.json。
+    绝不碰用户的 stuttertriage_config.json。
     """
     print("== 10. 换肤持久化：保存 → 重新加载 → 生效 ==")
     import json
     import tempfile
-    from framelab.config import Config, VALID_THEMES
+    from stuttertriage.config import Config, VALID_THEMES
 
-    tmpdir = tempfile.mkdtemp(prefix="framelab_cfg_")
-    p = os.path.join(tmpdir, "framelab_config.json")
+    tmpdir = tempfile.mkdtemp(prefix="stuttertriage_cfg_")
+    p = os.path.join(tmpdir, "stuttertriage_config.json")
     c = Config(path=p)
     check("默认皮肤是深空黑", c.get("theme") == "deepspace", c.get("theme"))
     for key in ("theme", "chart_style", "custom_bg"):
@@ -663,9 +680,9 @@ def test_skin_persist():
 
     # 真窗口：换肤后 config 里的 theme 必须跟着变
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     win._ux_config = Config(path=p)
-    win._apply_theme(__import__("framelab.theme", fromlist=["x"]).THEME_CAPFRAMEX.copy(),
+    win._apply_theme(__import__("stuttertriage.theme", fromlist=["x"]).THEME_CAPFRAMEX.copy(),
                      persist=True)
     check("窗口换肤写回配置", json.load(open(p, encoding="utf-8")).get("theme") == "capframex",
           json.load(open(p, encoding="utf-8")).get("theme"))
@@ -677,7 +694,7 @@ def test_skin_persist():
 
 def test_font_tokens():
     print("== 11. 字体层级与配色令牌（规范 §1）==")
-    from framelab import theme as T
+    from stuttertriage import theme as T
     th = T.THEME_LIGHT
     check("浅色主题 FG = #1E293B", th.fg.upper() == "#1E293B", th.fg)
     check("浅色主题 DIM = #475569", th.dim.upper() == "#475569", th.dim)
@@ -689,7 +706,7 @@ def test_font_tokens():
               bool(t.key_bg) and bool(t.key_fg) and bool(t.val))
     # 全局 QSS 必须写死基线字重（禁止细体小灰字）
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     sheet = win.styleSheet()
     check("全局 QSS 含 font-weight 基线", "font-weight" in sheet)
     check("卡片标题 13px / 600", "13px" in win.card_avg.lbl_title.styleSheet()
@@ -704,12 +721,12 @@ def test_pro_table():
     """§12 v1.0.2：11 项归因表 —— 不许横滚 / 不许灰字 / 行高按内容 / 底色跟主题"""
     print("== 12. 归因表可读性（用户截图返修）==")
     from PyQt6.QtCore import Qt
-    from framelab.analysis import DiffRow
-    from framelab.ui.diagnosis import ProfessionalTableDialog
-    from framelab import theme as T
+    from stuttertriage.analysis import DiffRow
+    from stuttertriage.ui.diagnosis import ProfessionalTableDialog
+    from stuttertriage import theme as T
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     dlg = ProfessionalTableDialog(win)
     rows = []
     for i in range(11):
@@ -767,10 +784,10 @@ def test_cpu_page_space():
     """§13 v1.0.2：CPU 页 —— KV 面板贴内容、线程列表可伸缩、火花线自适应窗口"""
     print("== 13. CPU 页版面与每线程折线（用户截图返修）==")
     from PyQt6.QtWidgets import QSizePolicy
-    from framelab.ui.cpu_trend import CpuThreadTrends
+    from stuttertriage.ui.cpu_trend import CpuThreadTrends
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     win.resize(1440, 900)
     win._on_nav_clicked(1)
     pump(app, 120)
@@ -796,7 +813,7 @@ def test_cpu_page_space():
                       page.threads.scroll.maximumHeight()))
 
     # 【v1.0.3】折线"明显点"：行要够高、线要够粗、要有渐变填充（像素级验证）
-    from framelab.ui.cpu_trend import CpuThreadRow
+    from stuttertriage.ui.cpu_trend import CpuThreadRow
     check("每线程行高 ≥26px", CpuThreadRow.ROW_H >= 26, str(CpuThreadRow.ROW_H))
     rows = page.threads.rows
     if rows:
@@ -812,7 +829,7 @@ def test_cpu_page_space():
         r0.set_window(4160.0, 4560.0)
         r0.spark.resize(600, r0.spark.height())
         img = r0.spark.grab().toImage()
-        accent = __import__("framelab.theme", fromlist=["x"]).CURRENT_THEME.accent
+        accent = __import__("stuttertriage.theme", fromlist=["x"]).CURRENT_THEME.accent
         want = __import__("PyQt6.QtGui", fromlist=["x"]).QColor(accent)
         hit = 0
         for yy in range(img.height()):
@@ -842,7 +859,7 @@ def test_cpu_page_space():
     check("空闲核不会把窗口拉到 800..4600", span2 <= 0.26 * 4620,
           "span=%.0f (%.0f..%.0f)" % (span2, win2[0], win2[1]))
     check("CpuFreqBars 不再在图内写频率数字",
-          "best_f" not in open(os.path.join(ROOT, "framelab", "ui", "gauge.py"),
+          "best_f" not in open(os.path.join(ROOT, "stuttertriage", "ui", "gauge.py"),
                                encoding="utf-8").read())
     win.close()
     win.deleteLater()
@@ -852,8 +869,8 @@ def test_cpu_page_space():
 def test_light_red_readable():
     """§16 v1.0.3：白色皮肤下的红/橙必须看得清（用户主诉）"""
     print("== 16. 浅色主题可读性（红色在白底看不清）==")
-    from framelab import theme as T
-    from framelab.ui import plain
+    from stuttertriage import theme as T
+    from stuttertriage.ui import plain
 
     def lum(hexcol):
         c = __import__("PyQt6.QtGui", fromlist=["x"]).QColor(hexcol)
@@ -869,7 +886,7 @@ def test_light_red_readable():
         return (hi + 0.05) / (lo + 0.05)
 
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     win._apply_theme(T.THEME_LIGHT.copy(), persist=False)
     pump(app, 80)
     th = T.CURRENT_THEME
@@ -900,7 +917,7 @@ def test_mem_pagein():
     """§14 v1.0.2：内存页 —— 能量条量程、换页 Top 空表必须说明原因"""
     print("== 14. 内存页换页归因（用户提问：空表是 bug 还是真没换页）==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
-    win = FrameLabWindow()
+    win = StutterTriageWindow()
     # 【v1.0.4 心跳】未采集时窗口会每 100ms 用真实快照刷新硬件页；
     # 本节直接构造 hw 手动刷 MemPage，必须停掉定时器，否则断言被真实数据覆盖。
     win.ui_timer.stop()
@@ -986,7 +1003,7 @@ def main():
     if FAILED:
         print("FAILED: %d -> %s" % (len(FAILED), FAILED))
         return 1
-    print("ALL FrameLab 1.0.x LAYOUT CHECKS PASSED")
+    print("ALL StutterTriage 1.0.x LAYOUT CHECKS PASSED")
     return 0
 
 

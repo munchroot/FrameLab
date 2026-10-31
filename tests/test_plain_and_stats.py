@@ -17,12 +17,12 @@ except Exception:
 
 import numpy as np                                             # noqa: E402
 
-from framelab import consts                                    # noqa: E402
-from framelab.models import DiffRow, FrameRecord               # noqa: E402
-from framelab.stats import (bottleneck, drop_flags, dropped_verdict, fps_verdict,
+from stuttertriage import consts                                    # noqa: E402
+from stuttertriage.models import DiffRow, FrameRecord               # noqa: E402
+from stuttertriage.stats import (bottleneck, drop_flags, dropped_verdict, fps_verdict,
                             grade, local_median_fps, smooth_series, stutter_flags,
                             vram_bar_text, window_stats)          # noqa: E402
-from framelab.ui import plain                                  # noqa: E402
+from stuttertriage.ui import plain                                  # noqa: E402
 
 FAILS = []
 
@@ -140,8 +140,8 @@ def main():
     check("CPU 瓶颈判定", bn2["side"] == "cpu" and "CPU" in bn2["text"], bn2["text"])
 
     print("== 阈值热更新会广播到所有模块（拆分后的关键回归点）==")
-    from framelab import analysis, config
-    from framelab.engines import hardware
+    from stuttertriage import analysis, config
+    from stuttertriage.engines import hardware
     cfg = config.Config()
     cfg.set("spill_threshold", 32 << 20)
     cfg.apply_to_globals()

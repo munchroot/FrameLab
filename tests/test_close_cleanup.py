@@ -76,10 +76,10 @@ def visible_top_levels(win):
 def main():
     app = QtWidgets.QApplication(sys.argv[:1])
     app.setStyle("Fusion")
-    import FrameLab as F
+    import StutterTriage as F
 
     print("== A. 权限提醒必须是非模态（不阻塞主窗口关闭）==")
-    win = F.FrameLabWindow()
+    win = F.StutterTriageWindow()
     win.show()
     pump(app, 200)
     win._admin_prompt_shown = False
@@ -127,7 +127,7 @@ def main():
           "before=%d after=%d" % (n_before, len(visible_top_levels(win))))
 
     print("== D. procguard：PresentMon 必须随父进程一起死 ==")
-    from framelab import procguard
+    from stuttertriage import procguard
     check("procguard 可导入", hasattr(procguard, "bind_kill_on_exit"))
     if os.name == "nt":
         child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"],

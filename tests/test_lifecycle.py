@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-# 【v4.0 移植】原 _test_lifecycle.py，未改逻辑（import FrameLab 仍走兼容层）。
+# 【v4.0 移植】原 _test_lifecycle.py，未改逻辑（import StutterTriage 仍走兼容层）。
 # -*- coding: utf-8 -*-
 """
 评审要求的「必须补上的测试」—— 资源生命周期与可靠性。
 
 GPT 评审建议的测试表：
-| 连续启动、停止 100 次 | 无线程回收异常，无残留的 FrameLab ETW 会话 |
+| 连续启动、停止 100 次 | 无线程回收异常，无残留的 StutterTriage ETW 会话 |
 | PresentMon 持续输出大量 stderr | stdout 仍被持续读取，不出现死锁 |
 | CSV 含 BOM、引号、缺列、NA、NaN、无穷值 | 无崩溃，无无效帧污染统计 |
 | 导入空文件或损坏 CSV | 保留原有会话数据 |
@@ -22,12 +22,12 @@ import threading
 import subprocess
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-sys.path.insert(0, r"F:\Desktop\不完美项目\VRAMWatch")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 from PyQt6 import QtWidgets
 
-import FrameLab as FL
+import StutterTriage as FL
 
 fails = []
 
@@ -58,7 +58,7 @@ errors = []
 for i in range(100):
     try:
         b = FL.PresentMonBridge(q)
-        b.etw.session_name = "FrameLab_PM_LIFECYCLE_%03d" % i
+        b.etw.session_name = "StutterTriage_PM_LIFECYCLE_%03d" % i
         b.start()
         threads.append(b)
     except Exception as ex:
@@ -99,11 +99,11 @@ leftover = []
 for _try in range(12):
     time.sleep(0.5)
     leftover = [n for n in FL.EtwSessionManager.list_sessions()
-                if n.lower().startswith("framelab_pm_") and n not in _PRE_ETW]
+                if n.lower().startswith("stuttertriage_pm_") and n not in _PRE_ETW]
     if not leftover:
         break
-print("   残留 FrameLab ETW 会话（本测试新增）: %s" % (leftover if leftover else "无"))
-check("无残留 FrameLab ETW 会话", len(leftover) == 0, str(leftover[:5]))
+print("   残留 StutterTriage ETW 会话（本测试新增）: %s" % (leftover if leftover else "无"))
+check("无残留 StutterTriage ETW 会话", len(leftover) == 0, str(leftover[:5]))
 
 
 # ==============================================================================
@@ -176,7 +176,7 @@ class FakeProc:
 q2 = FL.BoundedQueue(maxsize=100000)
 bridge = FL.PresentMonBridge(q2)
 bridge.proc = FakeProc(n_frames=800, stderr_lines=4000)
-bridge.etw.session_name = "FrameLab_PM_FAKE"
+bridge.etw.session_name = "StutterTriage_PM_FAKE"
 t0 = time.time()
 bridge._parse_stream()
 elapsed = time.time() - t0
@@ -248,7 +248,7 @@ print("=" * 72)
 print("T4) 导入空文件/损坏 CSV：必须保留原有会话数据")
 print("=" * 72)
 app = QtWidgets.QApplication(sys.argv)
-win = FL.FrameLabWindow()
+win = FL.StutterTriageWindow()
 win.store.frames.clear()
 for i in range(50):
     win.store.add_frame(FL.FrameRecord(i + 1, i * 0.016, 1000.0 + i * 0.016, "Keep.exe", 1, 16.7))

@@ -22,7 +22,7 @@ _build/
 
 # 本地配置与日志
 *.local.json
-framelab_diag.log
+stuttertriage_diag.log
 *.log
 
 # IDE / 编辑器

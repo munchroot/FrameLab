@@ -3,7 +3,7 @@
 子进程「跟父进程一起死」的保险（Windows Job Object）。
 
 【解决什么】
-PresentMon 是外部 exe，它的 ETW 会话是**全局资源**。一旦 FrameLab 被强杀
+PresentMon 是外部 exe，它的 ETW 会话是**全局资源**。一旦 StutterTriage 被强杀
 （任务管理器结束进程 / 崩溃 / 断电重启前的强制关闭），Python 侧的
 `terminate()` 根本没机会执行 —— 于是：
   · 屏幕上还留着一个孤儿对话框；
@@ -13,7 +13,7 @@ PresentMon 是外部 exe，它的 ETW 会话是**全局资源**。一旦 FrameLa
 Windows 的 Job Object 带 `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`：
 把子进程塞进这种 Job 之后，**只要持有 Job 句柄的进程结束（正常退出 / 强杀 / 崩溃），
 系统会自动把 Job 里的所有进程一起干掉**。句柄由本进程持有、永不主动关闭，
-所以这条规则等价于「FrameLab 一死，PresentMon 必死」。
+所以这条规则等价于「StutterTriage 一死，PresentMon 必死」。
 
 【安全性】
 · 纯 best-effort：任何一步失败都返回 False，调用方忽略即可，绝不影响采集主流程；

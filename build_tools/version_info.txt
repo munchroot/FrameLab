@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # PyInstaller 版本资源（写进 EXE 的「属性 → 详细信息」）
-# 与 framelab/__init__.py 的 __version__ 保持一致。
+# 与 stuttertriage/__init__.py 的 __version__ 保持一致。
 VSVersionInfo(
     ffi=FixedFileInfo(
         filevers=(1, 0, 4, 0),
@@ -17,13 +17,13 @@ VSVersionInfo(
             StringTable(
                 "080404B0",
                 [
-                    StringStruct("CompanyName", "FrameLab"),
-                    StringStruct("FileDescription", "FrameLab · 游戏卡顿一站式体检台"),
+                    StringStruct("CompanyName", "StutterTriage"),
+                    StringStruct("FileDescription", "StutterTriage · 游戏卡顿一站式体检台"),
                     StringStruct("FileVersion", "1.0.4.0"),
-                    StringStruct("InternalName", "FrameLab"),
+                    StringStruct("InternalName", "StutterTriage"),
                     StringStruct("LegalCopyright", "本机自用工具"),
-                    StringStruct("OriginalFilename", "FrameLab.exe"),
-                    StringStruct("ProductName", "FrameLab"),
+                    StringStruct("OriginalFilename", "StutterTriage.exe"),
+                    StringStruct("ProductName", "StutterTriage"),
                     StringStruct("ProductVersion", "1.0.4.0"),
                 ],
             )

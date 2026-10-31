@@ -1,6 +1,6 @@
-# FrameLab Core API Contract (read-only extraction)
+# StutterTriage Core API Contract (read-only extraction)
 
-Source: `framelab/` 包 + `FrameLab.py` 入口 (8078 lines, PyQt6 + pyqtgraph + numpy).
+Source: `stuttertriage/` 包 + `StutterTriage.py` 入口 (8078 lines, PyQt6 + pyqtgraph + numpy).
 Target audience: an engineer who will **rewrite only the UI layer** and import these classes from new modules.
 Module-level constant *values* are quoted from their definition sites (lines 486–560, 640, 1245–1270, 2116, 7318–7380); everything else comes from the four instructed ranges (1357–1472, 1473–1545, 1546–2575, 2576–3730).
 Nothing in this document is invented: every identifier, literal and default is quoted verbatim from the source. Ambiguities are marked `[UNCLEAR:line]`.
@@ -32,7 +32,7 @@ Legend: `ms` = milliseconds of wall time per frame, `MB/s` = 1048576 bytes/secon
 
 Producer→consumer channel: **`queue.Queue`/`BoundedQueue` of `(tag, payload)` tuples**.
 Tags published inside the ranges, verbatim: `"hw"`, `"event"` (from `HardwareEngine`), `"frame"`, `"status"` (from `PresentMonBridge`).
-The existing UI consumes them in `FrameLabWindow._drain_queue` (line 4226): `"frame"`→`store.add_frame`, `"hw"`→`store.add_snapshot`, `"event"`→`store.add_event`, `"status"`→stashed in `self._pending_status`.
+The existing UI consumes them in `StutterTriageWindow._drain_queue` (line 4226): `"frame"`→`store.add_frame`, `"hw"`→`store.add_snapshot`, `"event"`→`store.add_event`, `"status"`→stashed in `self._pending_status`.
 
 ---
 
@@ -187,13 +187,13 @@ class EtwSessionManager:
     def alive(self)                         # -> bool
 ```
 
-Public attribute: `session_name: str` = `PM_SESSION_PREFIX + uuid4().hex[:10]` ⇒ unique per instance, e.g. `FrameLab_PM_3f9a1c2b70`.
+Public attribute: `session_name: str` = `PM_SESSION_PREFIX + uuid4().hex[:10]` ⇒ unique per instance, e.g. `StutterTriage_PM_3f9a1c2b70`.
 
 | Method | Returns | Semantics |
 |---|---|---|
 | `list_sessions()` | `list[str]` | Runs `logman query -ets` (15 s timeout), keeps lines containing `"Trace"` or `"Provider"`, first whitespace token = session name. Returns `[]` on any failure (never raises). |
 | `stop_session(name)` | `bool` | Validation guard `re.match(r"^[A-Za-z0-9_.-]+$", name)` blocks command injection and returns `False` for invalid/empty names; otherwise runs `logman stop <name> -ets` (20 s timeout) and returns `True` (even if logman itself failed — `[UNCLEAR:1516]` it does not check the exit code). |
-| `cleanup_stale(skip=None)` | `list[str]` | Stops every live session whose name starts with `PM_SESSION_PREFIX` (case-insensitive) except `skip`. Returns the names it attempted to stop. Called by `PresentMonBridge.run` with **no** `skip`, i.e. it also clears sessions of other FrameLab instances. |
+| `cleanup_stale(skip=None)` | `list[str]` | Stops every live session whose name starts with `PM_SESSION_PREFIX` (case-insensitive) except `skip`. Returns the names it attempted to stop. Called by `PresentMonBridge.run` with **no** `skip`, i.e. it also clears sessions of other StutterTriage instances. |
 | `dispose()` | `None` | `stop_session(self.session_name)`; the mandatory safety net because a killed PresentMon leaves the ETW session `Running` (4 leftovers ⇒ error 1450 ⇒ silent 0-frame capture). |
 | `alive()` | `bool` | `self.session_name in self.list_sessions()`. |
 
@@ -283,7 +283,7 @@ Result is memoised in `_PM_CAP_CACHE`. Blocking (subprocess) — do not call per
 ### 7.4 `find_presentmon_binary(explicit=None)` (2156–2202)
 `def find_presentmon_binary(explicit=None)` → `str | None`. Search order:
 1. `explicit` if it is an existing file, else `None` (note: an explicit non-file returns `None` immediately, it does **not** fall through);
-2. environment variable `FRAMELAB_PRESENTMON` (if an existing file);
+2. environment variable `STUTTERTRIAGE_PRESENTMON` (if an existing file);
 3. script dir + `PresentMon`/`tools`/`external`/`bin`, first `sorted(glob(root + "/*PresentMon*.exe"))`;
 4. every root from `_presentmon_search_roots()` with depth 1–4 patterns `*PresentMon*.exe` … `*/*/*/*PresentMon*.exe`, accepting files **> 100 KiB**;
 5. `shutil.which("PresentMon.exe") or shutil.which("PresentMon")`.
@@ -434,7 +434,7 @@ Class docstring: “统一时序数据库（**仅由 UI 线程写入**，因此�
 | `baseline` | `BaselineTracker` | see §8 | — |
 | `METRIC_WINDOW` | class attribute `int` = 1000 | frames used by `summary_metrics` | — |
 
-There is **no** `frames_window`, `latest`, `series`, `export_csv`, `clear`, or `capacity` method on `FrameStore` (verified by grep: the only remaining `def ...` in the class are the ones listed above). For charting, the UI copies `list(store.frames)` or `list(store.visible_frames(target))`; for CSV import/export and for clearing, the existing UI manipulates `store.frames` **directly** (`FrameLabWindow._import_csv` at 6229 does `clear()`/`append()`), which is why `_ensure_index` performs an identity/`len` self-heal. The rewritten UI must keep that contract: after any direct mutation of `store.frames`, the next public call rebuilds the indices automatically (`_rebuild_index`), and that rebuild is O(n).
+There is **no** `frames_window`, `latest`, `series`, `export_csv`, `clear`, or `capacity` method on `FrameStore` (verified by grep: the only remaining `def ...` in the class are the ones listed above). For charting, the UI copies `list(store.frames)` or `list(store.visible_frames(target))`; for CSV import/export and for clearing, the existing UI manipulates `store.frames` **directly** (`StutterTriageWindow._import_csv` at 6229 does `clear()`/`append()`), which is why `_ensure_index` performs an identity/`len` self-heal. The rewritten UI must keep that contract: after any direct mutation of `store.frames`, the next public call rebuilds the indices automatically (`_rebuild_index`), and that rebuild is O(n).
 
 ### 9.3 Writers
 - `add_snapshot(snap)` → `None`. Appends to `snapshots`; updates `_snap_by_seq[snap.seq]`, `_snap_ts`, `_snap_seq`; trims the three index arrays to `len(snapshots)`; appends `(snap.ts, snap.cache_new_files, snap.cache_new_mb)` to `cache_timeline`; appends to the shader bisect timeline (`_ct_ts/_ct_files/_ct_mb`, marks `_ct_sorted = False` if a timestamp goes backwards) and compacts the timeline in ≥1024-element batches.
@@ -541,7 +541,7 @@ Threshold / behaviour constants (all in the `§1b 旧版模块级常量` block u
 | `NET_STALL_RATIO` | `0.25` | 528 | 3545 |
 | `PROC_EVENT_WHITELIST` | `{"amdrsserv.exe", "amdrsservice.exe"}` | 529 | 1795, 3402 |
 | `NON_GAME_PROCESSES` | 20-name `set` (dwm/explorer/chrome/msedge/firefox/msedgewebview2/wallpaper32/steamwebhelper/discord/searchhost/textinputhost/shellexperiencehost/startmenuexperiencehost/amdow/nvcontainer/rtss/obs64/wechat/tim/vlc/potplayer) | 533–539 | 3067 |
-| `PM_SESSION_PREFIX` | `"FrameLab_PM_"` (sentinel string) | 542 | 1487, 1533 |
+| `PM_SESSION_PREFIX` | `"StutterTriage_PM_"` (sentinel string) | 542 | 1487, 1533 |
 | `PM_BUFFER_SIZE` | `4096` (must be a power of two) | 543 | 2353 |
 | `BASELINE_WINDOW` | `240` (frames) | 546 | 2599 |
 | `BASELINE_EMA` | `0.25` | 547 | 2598 |
@@ -583,7 +583,7 @@ Config-driven write-back targets (outside the range, but they are the same globa
 - `GC_SPIKE_ABS_MS` — 3671; `GC_SPIKE_RATIO` — 3671; `GC_LOW_UTIL` — 3681
 - `NET_STALL_RX_KB` — 3544, 3552; `NET_STALL_RATIO` — 3545
 - `BASELINE_EMA` — 2598; `BASELINE_WINDOW` — 2599; `BASELINE_SPIKE_RATIO` — 2600; `BASELINE_MAX_SPIKE_FRAC` — 2601
-- Environment variable `FRAMELAB_PRESENTMON` — 2167 (a process-global read; keep it configurable)
+- Environment variable `STUTTERTRIAGE_PRESENTMON` — 2167 (a process-global read; keep it configurable)
 
 **Module-level functions/classes the ranges import from the flat module** (must be re-homed or re-imported): `human_size` (1797, 3419), `pages_to_mb_per_s` (2075, 2076), `is_na` (2495, 2523), `safe_float` (2511, 2512, 2524), `fmt_delta` (3309, 3374, 3522, 3586), `NameTable`, `PdhSession`, `CacheWatcher`, `GpuClockProbe`, `dxgi_adapters`, `cpu_count`, `per_core_max_mhz`, plus the stdlib/third-party names `time, os, re, csv, math, glob, shutil, subprocess, uuid, threading, ctypes, np (numpy), bisect, collections.deque, queue`.
 
@@ -618,11 +618,11 @@ Capacities / windows: `FrameStore(max_frames=100000, max_snaps=20000)`; `events`
 
 ---
 
-## 15. v4.1 增补：判定口径与新增纯函数（`framelab/stats.py` / `framelab/consts.py`）
+## 15. v4.1 增补：判定口径与新增纯函数（`stuttertriage/stats.py` / `stuttertriage/consts.py`）
 
 本节是拆分 & 二次重构之后的**增量契约**；第 0~14 节描述的单体 API 依然有效。
 
-### 15.1 新增阈值（`framelab/consts.py`，均已登记进 `LIVE_CONST_NAMES` 可热更新）
+### 15.1 新增阈值（`stuttertriage/consts.py`，均已登记进 `LIVE_CONST_NAMES` 可热更新）
 
 | 常量 | 默认 | 含义 |
 |---|---|---|
@@ -638,7 +638,7 @@ Capacities / windows: `FrameStore(max_frames=100000, max_snaps=20000)`; `events`
 第 9 行「GPU 核心频率 / 撞墙降频」的 DANGER 需：`base_clk ≥ 1200` ∧ `3D 负载 ≥ 60%`
 ∧ `drop > 20%` ∧ 本帧 `cur_ft ≥ base_ft × 1.8`。
 
-### 15.2 `framelab/stats.py` 新增 / 变更的纯函数
+### 15.2 `stuttertriage/stats.py` 新增 / 变更的纯函数
 
 | 函数 | 契约 |
 |---|---|
@@ -670,7 +670,7 @@ Capacities / windows: `FrameStore(max_frames=100000, max_snaps=20000)`; `events`
 | `ui/widgets.ElidedLabel` | QLabel 子类：`setText()` 后自动按宽度截断（`…`）、`fullText()` 取全文、`set_tooltip_enabled(bool)`；`wordWrap=False` 且纵向 `Fixed` —— 版面零抖动的基础件 |
 | `ui/diagnosis.MiniDiagnosisCard` | 新增 `show_idle()`（中性占位，与真卡同高）；**不再 hide()**：`_on_close` 与主窗口复位路径一律走 `show_idle()` |
 | `ui/pages._Page` | 删除 `SUBTITLE` / `lbl_subtitle`；`lbl_verdict` / `lbl_advice` 改为 `ElidedLabel`（单行 + tooltip） |
-| `ui/main_window.FrameLabWindow` | 新增常量 `BANNER_HEIGHT = 96`（横幅固定高度）、`_push_cpu_trend(hw)`（每 tick 喂 CPU 折线，与当前页无关） |
+| `ui/main_window.StutterTriageWindow` | 新增常量 `BANNER_HEIGHT = 96`（横幅固定高度）、`_push_cpu_trend(hw)`（每 tick 喂 CPU 折线，与当前页无关） |
 
 ### 15.5 v1.0.1 新增/变更
 
@@ -719,10 +719,10 @@ Capacities / windows: `FrameStore(max_frames=100000, max_snaps=20000)`; `events`
 
 | 项 | 契约 |
 |---|---|
-| `ui/main_window.FrameLabWindow.DIAG_RENDER_INTERVAL` | 类属性 = `0.5`（秒）：**顿挫横幅 + 锁定卡跟随**两条路径的会话归因全量重算最小间隔，闸门用 `_diag_render_ts`。旧实现三条路径以 30Hz 调 `SnapshotDiffInspector.inspect()`，而该函数的缓存键含帧数（实时采集每 tick 都变）→ 10 万帧会话单 tick ≈36–39 ms，把 33 ms UI 定时器彻底淹没（即用户报告的「FrameLab 自己卡住」） |
-| `FrameLabWindow.AUTO_POPUP_INTERVAL` | 类属性 = `1.0`（秒）：顿挫自动弹病历卡最小间隔，闸门用 `_auto_popup_ts` |
-| `FrameLabWindow.DIAG_FOLLOW_INTERVAL` | 类属性 = `1.0`（秒）：锁定帧病历卡跟随刷新间隔（与横幅共用 `_diag_render_ts` 闸门） |
-| `FrameLabWindow._page_ctx(hw, frames=None)` | 复用一个 tick 内已取的 `visible_frames` 列表；**禁止**再按页调用 `store.visible_frames()` 复制最多 10 万帧 |
+| `ui/main_window.StutterTriageWindow.DIAG_RENDER_INTERVAL` | 类属性 = `0.5`（秒）：**顿挫横幅 + 锁定卡跟随**两条路径的会话归因全量重算最小间隔，闸门用 `_diag_render_ts`。旧实现三条路径以 30Hz 调 `SnapshotDiffInspector.inspect()`，而该函数的缓存键含帧数（实时采集每 tick 都变）→ 10 万帧会话单 tick ≈36–39 ms，把 33 ms UI 定时器彻底淹没（即用户报告的「StutterTriage 自己卡住」） |
+| `StutterTriageWindow.AUTO_POPUP_INTERVAL` | 类属性 = `1.0`（秒）：顿挫自动弹病历卡最小间隔，闸门用 `_auto_popup_ts` |
+| `StutterTriageWindow.DIAG_FOLLOW_INTERVAL` | 类属性 = `1.0`（秒）：锁定帧病历卡跟随刷新间隔（与横幅共用 `_diag_render_ts` 闸门） |
+| `StutterTriageWindow._page_ctx(hw, frames=None)` | 复用一个 tick 内已取的 `visible_frames` 列表；**禁止**再按页调用 `store.visible_frames()` 复制最多 10 万帧 |
 | `ui/base_window` 面板结构 | `hw_panel` 只剩 2 个页签：`tab_settings`（⚙ 设置）/ `tab_events`（⚡ 事件流）；刷新唯一入口 `_refresh_events_tab()`（旧 `_refresh_hardware_tabs` 与 4 个旧页签构建器、`_on_toggle_hw_panel`、`_update_hw_panel_button` 已删除）；事件表用 `pages._set_cells` 差量写入 |
 | `config.CONFIG_LABELS` / `config.CONFIG_GROUPS` | 设置页呈现契约：`CONFIG_LABELS[key] = (中文名, 单位·默认)`；`CONFIG_GROUPS = ((组标题, 一句话说明, keys), ...)`，顺序即渲染顺序；原始键名/说明只进 tooltip。`CONFIG_SCHEMA` 中未登记分组的键必须落到「兜底」表单 —— 只改呈现，键名/类型/读写逻辑不动 |
 | `config.Config.apply_to_globals(module_globals=None)` | 不传参 = 广播到 `consts.bind_globals()` 登记的全部模块；UI 的**保存阈值 / 恢复默认 / 重新载入**必须不带参调用（旧写法 `apply_to_globals(globals())` 只改 base_window 自己那份副本，界面提示「已保存」但判定用的 consts/engines/analysis/pages 四份副本不变，要重启才生效） |
@@ -737,4 +737,4 @@ Capacities / windows: `FrameStore(max_frames=100000, max_snaps=20000)`; `events`
 | `ui/main_window._refresh_ui_inner()`（空载分支） | 未开始采集 / 等待帧时横幅写明确原因（未开始 → 点「▶ 开始采集」；已开始 → 无数据请用管理员运行）；空图仅在 `fps_chart._frames` 非空时 `clear()`，禁止每 tick 重复清空 |
 | `ui/base_window._drain_hardware_only()` | 未开始采集时的队列消费方式：只 `add_snapshot`（硬件心跳），`frame` / `event` / `status` 丢弃；`_discard_pending()` 仍是全丢弃（开始采集/清空时用） |
 | `ui/base_window._toggle_pause()` | 三态入口 + **350ms 防连点**：`_begin_collection()` 会写 `_last_pause_ts`；`now - _last_pause_ts < 0.35` 时忽略点击（防止一次物理点击两次投递导致「开始→立刻暂停」） |
-| `FrameLabWindow._had_frames` | 空载分支只在「有帧 → 无帧」时 `_reset_cards()`；否则每 tick 复位会把刚写的 CPU/显卡数字冲回 `--%` |
+| `StutterTriageWindow._had_frames` | 空载分支只在「有帧 → 无帧」时 `_reset_cards()`；否则每 tick 复位会把刚写的 CPU/显卡数字冲回 `--%` |

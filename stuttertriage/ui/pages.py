@@ -13,7 +13,7 @@
       Page 4  🌐 网络与环境 → 上下行吞吐 + 着色器缓存目录文件数与写入爆发监控
 
 铁律：本模块**不做任何判定算法**，所有阈值与结论都来自既有底层探针
-（HardwareSnapshot）与 `framelab.stats`；这里只负责「把数字变成图形 + 大白话」。
+（HardwareSnapshot）与 `stuttertriage.stats`；这里只负责「把数字变成图形 + 大白话」。
 """
 from PyQt6 import QtGui
 from PyQt6.QtCore import Qt

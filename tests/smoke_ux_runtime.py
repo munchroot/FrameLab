@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-# 【v4.0 移植】原 _smoke_ux_runtime.py，未改逻辑（import FrameLab 仍走兼容层）。
+# 【v4.0 移植】原 _smoke_ux_runtime.py，未改逻辑（import StutterTriage 仍走兼容层）。
 # -*- coding: utf-8 -*-
 """
-FrameLab UX 增强 —— **真实运行时**冒烟验证（不启动真实 PresentMon 采集）。
+StutterTriage UX 增强 —— **真实运行时**冒烟验证（不启动真实 PresentMon 采集）。
 
-用 offscreen 平台起一个真的 QApplication + FrameLabWindow，
+用 offscreen 平台起一个真的 QApplication + StutterTriageWindow，
 验证 UI 组件真的存在、真的连上了、真的能工作：
   · 全局热键真的注册成功（或优雅降级）
   · 按热键 → 真的产生一个 Event(kind='手动标记', symbol='star')
@@ -25,7 +25,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from PyQt6 import QtCore, QtWidgets
-import FrameLab as F
+import StutterTriage as F
 
 FAILS = []
 
@@ -50,8 +50,8 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
 
-    print("== 1. 创建 FrameLabWindow ==")
-    win = F.FrameLabWindow()
+    print("== 1. 创建 StutterTriageWindow ==")
+    win = F.StutterTriageWindow()
     pump(app, 300)
     # 【手动开始采集】打点事件走队列，只有「开始采集」之后 UI 才会接收；
     # 测试直接进入采集态（否则按钮/热键打点会被当成"未开始"丢弃）。

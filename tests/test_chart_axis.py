@@ -19,13 +19,13 @@ import os
 import sys
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-sys.path.insert(0, r"F:\Desktop\不完美项目\VRAMWatch")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pyqtgraph as pg
 from PyQt6 import QtWidgets
 
-from framelab.models import FrameRecord
-from framelab.ui import chart as C
+from stuttertriage.models import FrameRecord
+from stuttertriage.ui import chart as C
 
 fails = []
 
@@ -204,7 +204,7 @@ print()
 print("=" * 72)
 print("A9) 主题切换后轴范围仍然正确 + 参考虚线颜色跟随主题")
 print("=" * 72)
-import framelab.theme as TH
+import stuttertriage.theme as TH
 
 for key, th in TH.THEME_PRESETS.items():
     ch.apply_theme(th)

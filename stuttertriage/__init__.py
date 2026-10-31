@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-r"""FrameLab 1.0.4 —— 游戏掉帧研究工作台 (PresentMon + Hardware Probe Inside)
+r"""StutterTriage 1.0.4 —— 游戏掉帧研究工作台 (PresentMon + Hardware Probe Inside)
 
-【v1.0.4】设置按钮瘦身 + 根治「FrameLab 自己卡住」：
+【v1.0.4】设置按钮瘦身 + 根治「StutterTriage 自己卡住」：
   1. **删掉 v3.2 遗留的 5 个进阶硬件页签**（CPU 热力图 / 显存监视 / 内存换入 /
      着色器与引擎 / 事件流）—— 前四者与主界面 5 个导航页信息完全重复，
      且它们的表格刷新调用了一个模块拆分时**丢失的方法** `_sync_table`，
@@ -11,7 +11,7 @@ r"""FrameLab 1.0.4 —— 游戏掉帧研究工作台 (PresentMon + Hardware Pro
      O(全部帧 × 卡顿帧)，且缓存键含帧数（实时采集时永不命中）。旧实现被
      「顿挫横幅 / 自动弹卡 / 锁定卡跟随」三条路径以 30Hz 反复触发，
      会话越长单次越贵，最终把 33ms 的 UI 定时器彻底淹没 —— 亦即用户报告的
-     「FrameLab 会自己卡住」。现在横幅 ≥0.5s、弹卡与跟随刷新 ≥1s 各一次，
+     「StutterTriage 会自己卡住」。现在横幅 ≥0.5s、弹卡与跟随刷新 ≥1s 各一次，
      归因算法本身一行未动（同样的判定、同样的结论，只是不再 30Hz 重算）。
   3. 顺手清掉 v3.2 只写不读的死字段（_display_* / _chart_mode / _env_cache /
      _metric_cache_ui / _table_cache / OVERVIEW_RENDER_CAP / ENV_*）与
@@ -25,7 +25,7 @@ r"""FrameLab 1.0.4 —— 游戏掉帧研究工作台 (PresentMon + Hardware Pro
   3. CPU 页把「两列 KV + 频率/功率折线 + 每线程折线」合并成一张 CpuFreqCard，
      每线程折线加粗到 2.2px + 渐变填充 + 斑马纹行（用户要求"折线明显点"）。
 
-【v1.0.0 正式版】名称固定为 FrameLab（不再带前缀品牌），版本从 4.3 起跳为 1.0.0：
+【v1.0.0 正式版】名称固定为 StutterTriage（不再带前缀品牌），版本从 4.3 起跳为 1.0.0：
   1. **版面零抖动**：横幅/结论行改为固定高度 + 单行省略号（ElidedLabel），
      病历卡改为常驻占位（不再 show/hide），数据到来与顿挫弹卡都不再推挤卡牌；
   2. **文案瘦身**：删除重复说明句与装饰性灰字，能用符号/短词就不用句子；
@@ -111,7 +111,7 @@ v3.1 深度 UX 重构（对齐商业游戏加加类软件的「傻瓜、活泼 +
    `error: failed to start trace session: error code 1450.`，
    表现为 "Started/Stopped recording" 但 **0 行数据**（最隐蔽的静默失败）。
    → 本程序用唯一 session 名 + `--stop_existing_session` + `logman stop` 兜底，
-     并在启动时清理上次残留的 FrameLab 会话。
+     并在启动时清理上次残留的 StutterTriage 会话。
 2) `--timed` 不配 `--terminate_after_timed` **必定泄漏** ETW 会话。
 3) `--dont_restart_as_admin` 是 **未识别选项** → rc=1 立即退出（绝不使用）。
 4) `--set_circular_buffer_size` 只解决 "events were lost" 丢包，**不解决 1450**；
@@ -165,28 +165,28 @@ v3.2 新探针实测契约（2026-10-24 于本机 AMD RX 6650 XT / Adrenalin 26.
 ================================================================================
 包结构（v4.0 拆分）
 ================================================================================
-    FrameLab.py                 启动器（薄壳，保持 python FrameLab.py 可用）
-    framelab/theme.py           主题系统：配色预设 / 热切换注册表 / 图表语义常量
-    framelab/consts.py          诊断阈值常量（可被 framelab_config.json 覆盖）
-    framelab/utils.py           日志 / 有界队列 / 格式化 / pyqtgraph 符号校验
-    framelab/probes.py          底层 ctypes 探针（PDH / DXGI / ADL / 缓存监视）
-    framelab/models.py          数据模型 Event / HardwareSnapshot / FrameRecord / DiffRow
-    framelab/etw.py             ETW 会话管家（error 1450 静默失败的根治）
-    framelab/engines/           HardwareEngine / PresentMonBridge 采集线程
-    framelab/analysis.py        BaselineTracker / FrameStore / SnapshotDiffInspector 归因
-    framelab/config.py          framelab_config.json 读写
-    framelab/hotkeys.py         全局热键
-    framelab/winadmin.py        管理员权限 / PresentMon 路径 / 数据源判定
-    framelab/csvio.py           CSV 后台读取
-    framelab/ui/widgets.py      通用可视化组件（单行省略标签 / 卡顿条 / 指标卡 / 读数条）
-    framelab/ui/navtabs.py      左侧 5 张大号视图导航卡（图标 + 模块名 + 实时徽章）
-    framelab/ui/gauge.py        GamePP 风格图形元件（胶囊条 / 圆环 / 能量柱 / 段位徽章…）
-    framelab/ui/pages.py        QStackedWidget 的 5 个全屏页面（总览/CPU/显卡/内存/网络）
-    framelab/ui/chart.py        实时 FPS 曲线（渐变填充 + 均值虚线 + 漏帧红点 + 锁定坐标轴）
-    framelab/ui/diagnosis.py    极简卡顿病历卡 + 11 项专业对比表
-    framelab/ui/plain.py        小白话术映射表（术语 -> 人话 + 解决建议）
-    framelab/ui/main_window.py  主窗口装配（只做布局与接线）
-    framelab/app.py             进程入口 main()
+    StutterTriage.py                 启动器（薄壳，保持 python StutterTriage.py 可用）
+    stuttertriage/theme.py           主题系统：配色预设 / 热切换注册表 / 图表语义常量
+    stuttertriage/consts.py          诊断阈值常量（可被 stuttertriage_config.json 覆盖）
+    stuttertriage/utils.py           日志 / 有界队列 / 格式化 / pyqtgraph 符号校验
+    stuttertriage/probes.py          底层 ctypes 探针（PDH / DXGI / ADL / 缓存监视）
+    stuttertriage/models.py          数据模型 Event / HardwareSnapshot / FrameRecord / DiffRow
+    stuttertriage/etw.py             ETW 会话管家（error 1450 静默失败的根治）
+    stuttertriage/engines/           HardwareEngine / PresentMonBridge 采集线程
+    stuttertriage/analysis.py        BaselineTracker / FrameStore / SnapshotDiffInspector 归因
+    stuttertriage/config.py          stuttertriage_config.json 读写
+    stuttertriage/hotkeys.py         全局热键
+    stuttertriage/winadmin.py        管理员权限 / PresentMon 路径 / 数据源判定
+    stuttertriage/csvio.py           CSV 后台读取
+    stuttertriage/ui/widgets.py      通用可视化组件（单行省略标签 / 卡顿条 / 指标卡 / 读数条）
+    stuttertriage/ui/navtabs.py      左侧 5 张大号视图导航卡（图标 + 模块名 + 实时徽章）
+    stuttertriage/ui/gauge.py        GamePP 风格图形元件（胶囊条 / 圆环 / 能量柱 / 段位徽章…）
+    stuttertriage/ui/pages.py        QStackedWidget 的 5 个全屏页面（总览/CPU/显卡/内存/网络）
+    stuttertriage/ui/chart.py        实时 FPS 曲线（渐变填充 + 均值虚线 + 漏帧红点 + 锁定坐标轴）
+    stuttertriage/ui/diagnosis.py    极简卡顿病历卡 + 11 项专业对比表
+    stuttertriage/ui/plain.py        小白话术映射表（术语 -> 人话 + 解决建议）
+    stuttertriage/ui/main_window.py  主窗口装配（只做布局与接线）
+    stuttertriage/app.py             进程入口 main()
 ================================================================================
 """
 

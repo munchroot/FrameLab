@@ -255,7 +255,7 @@ class ProfessionalTableDialog(QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("FrameLab · 11 项专业归因数据")
+        self.setWindowTitle("StutterTriage · 11 项专业归因数据")
         self.resize(1240, 600)
         self.setMinimumSize(900, 380)
         lay = QVBoxLayout(self)

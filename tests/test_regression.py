@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 【v4.0 移植】原 _test_regression.py，未改逻辑（import FrameLab 仍走兼容层）。
+# 【v4.0 移植】原 _test_regression.py，未改逻辑（import StutterTriage 仍走兼容层）。
 # -*- coding: utf-8 -*-
 """
 回归测试：针对审计发现的两个阻断级缺陷 + 基线鲁棒性 + 时间轴单位。
@@ -16,7 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 from PyQt6 import QtWidgets
 
-import FrameLab as FL
+import StutterTriage as FL
 
 fails = []
 
@@ -106,7 +106,7 @@ print("=" * 72)
 print("R3) D1 回归：导入失败后 is_paused 必须复位（否则 UI 永久冻结）")
 print("=" * 72)
 app = QtWidgets.QApplication(sys.argv)
-win = FL.FrameLabWindow()
+win = FL.StutterTriageWindow()
 win._begin_collection()       # 【手动开始采集】先进入采集态，才谈得上"复位"
 win.is_paused = True
 win.btn_pause.setText("▶ 继续采集")

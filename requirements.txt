@@ -1,4 +1,4 @@
-# FrameLab 3.0 —— 运行时依赖
+# StutterTriage 3.0 —— 运行时依赖
 #
 # 安装:
 #   python -m pip install -r requirements.txt

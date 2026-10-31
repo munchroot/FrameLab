@@ -49,7 +49,7 @@ class BaselineTracker:
     """
 
     def __init__(self, ema=None, window=None, spike_ratio=None, max_spike_frac=None):
-        # 默认值取自模块级常量 —— 这样 framelab_config.json 覆盖后
+        # 默认值取自模块级常量 —— 这样 stuttertriage_config.json 覆盖后
         # 新建的 BaselineTracker 会自动继承新阈值。
         self.ema = BASELINE_EMA if ema is None else ema
         self.window = BASELINE_WINDOW if window is None else window

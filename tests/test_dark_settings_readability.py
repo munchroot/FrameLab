@@ -98,11 +98,11 @@ def main():
     app = QtWidgets.QApplication(sys.argv[:1])
     app.setStyle("Fusion")
     app.setFont(QtGui.QFont("Microsoft YaHei UI", 9))
-    import FrameLab as F
-    from framelab import theme as T
+    import StutterTriage as F
+    from stuttertriage import theme as T
 
     out = os.path.join(ROOT, "docs")
-    win = F.FrameLabWindow()
+    win = F.StutterTriageWindow()
     win.resize(1200, 800)
     win.show()
     pump(app, 400)
