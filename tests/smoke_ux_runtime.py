@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 【v4.0 移植】原 _smoke_ux_runtime.py，未改逻辑（import StutterTriage 仍走兼容层）。
+# UX 运行时冒烟验证（offscreen）。
 # -*- coding: utf-8 -*-
 """
 StutterTriage UX 增强 —— **真实运行时**冒烟验证（不启动真实 PresentMon 采集）。
@@ -70,7 +70,7 @@ def main():
 
     # ---- 打点按钮 ----
     print("== 3. 手动打点（按钮 + 热键回调）==")
-    # 【v1.0.3 测试健壮性】两处修正：
+    # 【测试健壮性】两处修正：
     #   ① `store.events` 是 deque(maxlen=600) —— 不能切片，只能整表过滤；
     #   ② 真实硬件引擎在后台也会往同一队列塞事件（磁盘 I/O / 着色器爆发…），
     #      所以不能断言"总数恰好 +1"，只断言"「手动标记」条目多了一条"。
@@ -162,7 +162,7 @@ def main():
     print("== 7. 其它 UX 元素 ==")
     check("启动权限提醒已接线（v3.2：启动弹窗承担，不再占顶栏）",
           hasattr(win, "_show_admin_prompt") and hasattr(win, "_schedule_admin_prompt"))
-    check("PresentMon 目录入口改在设置页（v1.0.0 删掉齿轮菜单里的重复项与死控件）",
+    check("PresentMon 目录入口在设置页（齿轮菜单无重复项与死控件）",
           hasattr(win, "btn_pm_open_dir") and not hasattr(win, "btn_pm_dir"))
     check("设置 Tab 存在", win.tab_settings is not None)
     check("设置 Tab 里的阈值编辑框数量正确",

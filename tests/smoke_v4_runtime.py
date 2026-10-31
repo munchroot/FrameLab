@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-v4.1 运行时冒烟验证（offscreen，不启动真实 PresentMon 采集）。
+运行时冒烟验证（offscreen，不启动真实 PresentMon 采集）。
 
 覆盖改进建议书（gemini-code-1793074763581）的 5 条硬性规范：
   A. 包拆分后所有模块可导入、旧顶层名字仍可从 StutterTriage 导入（向后兼容）
@@ -275,7 +275,12 @@ def main():
           gpu.ring._center)
     check("Page 2 显存百分比被 clamp（无 1008%）", 0.0 <= gpu.split.pct() <= 100.0,
           "%.2f%%" % gpu.split.pct())
-    check("Page 2 Top5 进程表有行", gpu.table.rowCount() >= 1, str(gpu.table.rowCount()))
+    # 【跨环境契约】CI 运行器是无 GPU 的虚拟机：显卡维度数据全空时，Top5 表为 0 行
+    # 是正确行为。这里断言「有 GPU 数据 -> 表必须有行；无 GPU 数据 -> 允许 0 行」。
+    _gpu_has_data = gpu.ring._center not in ("", "0%") or gpu.split.pct() > 0.0
+    check("Page 2 Top5 进程表与 GPU 数据一致",
+          gpu.table.rowCount() >= 1 or not _gpu_has_data,
+          "rows=%d gpu_data=%s" % (gpu.table.rowCount(), _gpu_has_data))
     win._on_nav_clicked(3)
     pump(app, 60)
     mem = win.pages[3]
@@ -433,7 +438,7 @@ def main():
     check("主题下拉框", win.combo_theme is not None)
     check("导入进度条存在", win.progress_import is not None)
     check("打点按钮存在", win.btn_mark is not None)
-    check("设置/事件流面板 2 个页签（v1.0.0 瘦身）", win.hw_tabs.count() == 2,
+    check("设置/事件流面板 2 个页签（瘦身）", win.hw_tabs.count() == 2,
           str(win.hw_tabs.count()))
     check("面板标题 = 设置与事件流", "设置与事件流" in win.hw_panel.windowTitle(),
           win.hw_panel.windowTitle())
@@ -457,7 +462,7 @@ def main():
     if FAILS:
         print("FAILED: %d -> %s" % (len(FAILS), FAILS))
         return 1
-    print("ALL v4.1 RUNTIME CHECKS PASSED")
+    print("ALL RUNTIME CHECKS PASSED")
     return 0
 
 

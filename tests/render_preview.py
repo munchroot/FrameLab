@@ -155,7 +155,7 @@ def main():
     win._on_nav_clicked(0)
     pump(app, 60)
 
-    # ⚙ 设置页（v4.2 暗色可读性修复的视觉证据）：
+    # ⚙ 设置页（暗色可读性视觉证据）：
     # 分别在深色/浅色主题下打开进阶面板的「⚙ 设置」标签截图。
     for key, name in (("deepspace", "preview_settings_dark.png"),
                       ("light", "preview_settings_light.png")):
