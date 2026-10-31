@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# 打包产物（EXE 走 GitHub Releases，不进仓库）
+dist/
+build/
+*.exe
+*.7z
+*.msi
+
+# 例外：PresentMon 官方发行版需随包分发（MIT 许可，见 THIRD_PARTY.md）
+!external/PresentMon/PresentMon-x64.exe
+
+# 构建环境
+_build_env/
+_build/
+
+# 本地配置与日志
+*.local.json
+framelab_diag.log
+*.log
+
+# IDE / 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 系统
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+# 临时探针（开发期用，不属于发布内容）
+tests/_probe_*.py

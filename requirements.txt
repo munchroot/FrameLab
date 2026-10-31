@@ -1,0 +1,12 @@
+# FrameLab 3.0 —— 运行时依赖
+#
+# 安装:
+#   python -m pip install -r requirements.txt
+#
+# 说明:
+#   · 全局热键使用 Windows RegisterHotKey（纯 ctypes），不需要任何额外的按键钩子库。
+#   · 全部依赖均为硬依赖，但版本范围留有余量，避免锁死在小版本补丁上。
+
+PyQt6>=6.6,<7
+pyqtgraph>=0.13,<0.15
+numpy>=1.25,<3

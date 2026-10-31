@@ -1,0 +1,20 @@
+{
+  "baseline_ema": 0.25,
+  "baseline_max_spike_frac": 0.35,
+  "baseline_spike_ratio": 2.2,
+  "baseline_window": 240,
+  "blacklist_extra": [],
+  "cache_burst_files": 8,
+  "chart_style": "hud",
+  "cpu0_idle_others": 70.0,
+  "cpu0_jam_threshold": 92.0,
+  "custom_bg": "",
+  "freq_drop_ratio": 0.18,
+  "hotkey": "Ctrl+Shift+P",
+  "max_hw_age": 1.2,
+  "migrate_freq_gap": 400.0,
+  "pm_buffer_size": 4096,
+  "presentmon_path": "",
+  "spill_threshold": 67108864,
+  "theme": "light"
+}
