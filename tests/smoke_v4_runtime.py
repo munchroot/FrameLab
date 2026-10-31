@@ -445,8 +445,13 @@ def main():
     before_n = len(win.store.events)
     win._begin_collection()       # 【手动开始采集】打点事件走队列，先进入采集态
     win.btn_mark.click()
-    pump(app, 50)
-    check("打点按钮产生事件", len(win.store.events) == before_n + 1)
+    # 【CI 健壮性】打点事件先入队列、由 UI 定时器排进 store；
+    # 慢速运行器上 50ms 固定等待不够，改为轮询等待（上限 3s）。
+    _t0 = time.time()
+    while len(win.store.events) <= before_n and time.time() - _t0 < 3.0:
+        pump(app, 30)
+    check("打点按钮产生事件", len(win.store.events) == before_n + 1,
+          "%d -> %d" % (before_n, len(win.store.events)))
     check("热键管理器已接线（或优雅降级）", win._hotkey is not None)
     check("热键提示标签非空", bool(win.lbl_hotkey.text()), win.lbl_hotkey.text()[:40])
 
