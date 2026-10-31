@@ -1,6 +1,6 @@
 # FrameLab Core API Contract (read-only extraction)
 
-Source: `F:\Desktop\不完美项目\VRAMWatch\FrameLab.py` (8078 lines, PyQt6 + pyqtgraph + numpy).
+Source: `framelab/` 包 + `FrameLab.py` 入口 (8078 lines, PyQt6 + pyqtgraph + numpy).
 Target audience: an engineer who will **rewrite only the UI layer** and import these classes from new modules.
 Module-level constant *values* are quoted from their definition sites (lines 486–560, 640, 1245–1270, 2116, 7318–7380); everything else comes from the four instructed ranges (1357–1472, 1473–1545, 1546–2575, 2576–3730).
 Nothing in this document is invented: every identifier, literal and default is quoted verbatim from the source. Ambiguities are marked `[UNCLEAR:line]`.

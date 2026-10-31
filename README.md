@@ -3,6 +3,12 @@
 Windows 游戏掉帧（卡顿）研究工作台：底层用 PresentMon + PDH/DXGI/ADL 采集，
 把「帧率掉了」翻译成**玩家看得懂的一句话 + 一招解决建议**。
 
+![界面预览](docs/preview_light.png)
+
+> **许可**：本项目以 [MIT 许可证](LICENSE) 开源。
+> 随包分发的 `external/PresentMon/PresentMon-x64.exe` 为 Intel 官方发行版（MIT），
+> 详见 [THIRD_PARTY.md](THIRD_PARTY.md)。
+
 > **v1.0.4 = 设置按钮瘦身 + 根治「FrameLab 自己卡住」**：
 > ① **卡死真因**：`SnapshotDiffInspector.inspect()` 结尾的会话级归因是
 > O(全部帧 × 卡顿帧)，而它的缓存键含帧数 —— 实时采集时帧数每 tick 都在变，
@@ -26,7 +32,7 @@ Windows 游戏掉帧（卡顿）研究工作台：底层用 PresentMon + PDH/DXG
 > 合并成一张卡 + 每线程折线加粗；v1.0.2 = 三张截图的 5 个「看着像坏了」问题；
 > v1.0.1 = 修「换肤重启丢失」等 10 项 + 版式瘦身；
 > v1.0.0 = 版面零抖动 + 文案瘦身 + CPU 频率/功率折线 + 正式更名；
-> v4.1 = 第二份建议书（`gemini-code-1793074763581.md`）的 1 个布局缺陷 + 4 个算法误报；
+> v4.1 = 早期外部评审建议书的 1 个布局缺陷 + 4 个算法误报；
 > v4.2 = 暗色主题下「设置」看不清；v4.3 = 关闭后残留（窗口关不掉 / PresentMon 孤儿）。
 
 ---
@@ -42,10 +48,12 @@ python FrameLab.py
 ```
 
 - 需要 Windows 10 1709+ / Windows 11。
-- 未安装 PresentMon 也能用：程序自动降级为「模拟数据流」，并可用 `CSV 导入回放`
+- **PresentMon 已随包内置**（`external/PresentMon/PresentMon-x64.exe`，Intel 官方 2.6.0 版），
+  克隆后**开箱即用**，无需自行下载或安装。
+- 未安装 PresentMon 的旧版本也能用：程序自动降级为「模拟数据流」，并可用 `CSV 导入回放`
   分析 CapFrameX / PresentMon 导出的 CSV。
-- 想采集真实帧数据：把 `PresentMon.exe` 放到本目录（或在 ⚙ 设置里指定路径）。
-- 建议以管理员身份运行（部分进程的 ETW/性能计数器需要权限；不强制）。
+- 想改用自己版本的 PresentMon：把 `PresentMon.exe` 放到 exe 所在目录（或在 ⚙ 设置里指定路径）。
+- 建议以管理员身份运行（完整 ETW 采集需要权限；非管理员会自动降级为模拟流）。
 
 ## 2. 目录结构（每个模块只干一件事）
 
@@ -522,25 +530,46 @@ pwsh -File build_tools\build_exe.ps1 -RebuildVenv
 路径来源统一由 `framelab/paths.py` 提供（拆分后踩过的坑：`__file__` 变成包目录，
 配置被写进 `framelab/` 导致用户旧配置失效）。
 
-## 7. 迁移与回滚
+## 7. 参与贡献
 
-删除前的全部旧文件都留有副本（项目目录**外**）：
+欢迎提交 Issue 与 Pull Request。
 
+### Issue 请附带
+
+- 操作系统版本（`winver` 输出）、显卡型号与驱动版本
+- FrameLab 版本（标题栏 / `framelab/__init__.py` 的 `__version__`）
+- 是否以管理员身份运行
+- `%USERPROFILE%\.framelab\framelab_diag.log` 的相关片段（该日志只记本地诊断，不含个人信息）
+
+### 开发约定（源自本项目自身的踩坑记录，请勿轻易推翻）
+
+1. **UI 层不得改动采集与归因语义**。归因算法可以改，但"何时调用、调用频率"必须留证据再改。
+2. **主题色不得写死十六进制**，一律映射到主题角色名（`bad` / `warn` / `green` / `dim`），
+   在访问时解析；浅色主题语义色对白底对比度需 >= 4.5:1。
+3. **配置保存必须广播**：`Config.apply_to_globals()` **不带参数**，让它广播到所有已注册模块；
+   传 `globals()` 只会更新本模块副本，会导致"看着保存了但要重启才生效"。
+4. **高频路径必须节流**：30Hz 路径上做 O(会话) 计算会直接淹没 UI 定时器，
+   节流常量写在 `main_window` 的类属性里，便于集中调参。
+5. **ctypes 回调分配的内存，生命周期必须由驱动接管**（AMD ADL 用驱动自己的 `free()`），
+   不能把 Python 缓冲区的裸地址交出去 —— 会 use-after-free，表现为随机闪退。
+6. **退出必须收干净**：顶层窗口要全部关掉（否则 Qt 不退出），子进程用 Job Object 兜底，
+   重复 `deleteLater()` 会让 PyQt6 在解释器收尾时 fastfail。
+
+### 跑测试
+
+```powershell
+# 全部（14 个脚本）
+python -m pip install -r requirements.txt
+$env:QT_QPA_PLATFORM = "offscreen"
+Get-ChildItem tests\*.py | ForEach-Object { python $_.FullName }
 ```
-F:\Desktop\不完美项目\_VRAMWatch_v3.2_backup\
-    FrameLab_v3.2_monolith.py        原 8000 行单体（357 KB）
-    FrameLabWindow_v3.2_ref.py       原 FrameLabWindow 单独摘录
-    FrameLab.exe                     旧可执行文件
-    FrameLab.py.bak_*                4 个历史备份
-    _test_*.py / _probe_*.py / _smoke_ux_runtime.py
-```
 
-回滚方式：把 `FrameLab_v3.2_monolith.py` 复制回项目目录改名 `FrameLab.py`，
-并临时把 `framelab/` 目录移走即可（旧单体不依赖包）。
-
+> `tests/render_preview.py` 必须用 `QT_QPA_PLATFORM=windows` 跑（offscreen 渲染不出中文字体）。
 ## 8. 已知限制
 
-- 仅 Windows；真实采集需要 PresentMon.exe 与（部分场景）管理员权限。
+- 仅 Windows；真实采集需要 PresentMon（本仓库已内置）与（完整 ETW 场景下的）管理员权限。
+- **PyQt6 采用 GPL-3.0 / 商业双许可**。本项目以 MIT 发布；若你打算将其用于**闭源商业软件**，
+  请改用 [PySide6](https://pypi.org/project/PySide6/)（LGPL-3.0）或向 Riverbank 购买 PyQt 商业许可。
 - 1% Low 用帧耗时 P99 换算；样本 < 1000 帧时 0.1% Low 会退化为 P99（界面会标注）。
 - 最高帧取的是窗口内最高**瞬时**帧率，切屏/加载瞬间的极端值会拉高它，属预期口径。
 - 「模拟数据」会在图表上打水印并在侧栏标注数据源，避免被误当真实采集。

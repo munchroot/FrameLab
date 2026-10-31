@@ -6,14 +6,14 @@
 > （设置页 / CSV 导入导出 / ETW 二次确认 / 提权提醒 / 热键 / 数据源三态 /
 > 主题热切换 / 关闭流程）已原样迁移到 `framelab/ui/base_window.py`，
 > 并由 `tests/` 下的 10 个脚本守护。旧代码已按「清理过时文件」删除，
-> 回滚副本见 `F:\Desktop\不完美项目\_VRAMWatch_v3.2_backup\`。
+
 >
 > **v4.1 版面二次重构**：左栏 280px 手风琴抽屉 → **240px 五张大号视图导航卡**
 > （`ui/navtabs.py`）；右侧下半区 → **QStackedWidget 五页整块替换**
 > （`ui/pages.py`：帧率总览 / CPU / 显卡与显存 / 内存与磁盘 / 网络与环境）；
 > `ui/accordion.py` 已删除。同时修正 4 处算法/坐标轴误报，见 `README.md` §3.2。
 
-目标文件：`F:\Desktop\不完美项目\VRAMWatch\FrameLab.py`（8078 行）
+目标文件：`framelab/` 包（`analysis.py` / `stats.py` / `ui/` 等）
 用途：UI 层（`FrameLabWindow` 4143–7305 + 控件 3731–4142 + 引导 8041–8078）即将拆分重写；本文件是"不丢行为"的对照清单。数据/引擎层保留不动。
 
 ## 0. 侦察方法与证据等级
