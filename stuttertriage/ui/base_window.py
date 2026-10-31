@@ -6,7 +6,7 @@ StutterTriageWindowBase —— 从 StutterTriage 3.2 单体工程原样迁移的
 CSV 导入导出 / ETW 清理 / 提权提醒 / PresentMon 指引 / 热键接线 /
 进程列表刷新 / 关闭流程。
 
-【v1.0.4 清理】v3.2 的 4 个硬件页签构建器（CPU 热力图 / 显存监视 /
+【v1.0.0 清理】v3.2 的 4 个硬件页签构建器（CPU 热力图 / 显存监视 /
 内存换入 / 着色器与引擎）连同只写不读的死字段一并删除 —— 它们的信息
 在主界面 5 个导航页里已经全有了。本模块现在只保留：
   · `_build_settings_tab()` —— ⚙ 设置页（主题 / 阈值 / 热键 / PresentMon）
@@ -72,7 +72,7 @@ class StutterTriageWindowBase(QMainWindow):
         self._env_tick = 0
         self._pending_status = (True, "正在初始化…")
 
-        # 【v1.0.4 清理】v3.2 遗留的 _display_frames/_display_ts/_display_idx/_display_x、
+        # 【v1.0.0 清理】v3.2 遗留的 _display_frames/_display_ts/_display_idx/_display_x、
         # _chart_mode/_chart_mode_dirty、_env_cache/_metric_cache_ui/_table_cache 已删除：
         # 新主界面（QStackedWidget + FpsChart）自带渲染管线，这些字段只写不读。
         self._zh_pg_menus_done = set()           # 已汉化的 pyqtgraph 菜单（防重复挂 aboutToShow）
@@ -437,7 +437,7 @@ class StutterTriageWindowBase(QMainWindow):
             self._restyle_chart()
             # 顶栏/横幅等用 setStyleSheet 单独设色的控件也要跟着变
             self._restyle_static_labels()
-            # 【v1.0.4】主题下拉框跟随当前主题（见 _sync_theme_combo）
+            # 【v1.0.0】主题下拉框跟随当前主题（见 _sync_theme_combo）
             self._sync_theme_combo(theme)
             if persist:
                 try:
@@ -526,9 +526,9 @@ class StutterTriageWindowBase(QMainWindow):
 
     def _build_events_tab(self):
         """
-        ⚡ 事件流：引擎告警 + 手动打点的唯一历史视图（v1.0.4 保留并修好）。
+        ⚡ 事件流：引擎告警 + 手动打点的唯一历史视图（v1.0.0 保留并修好）。
 
-        【v1.0.4】旧版这里用 `self._sync_table(...)` 写入表格，而该方法在
+        【v1.0.0】旧版这里用 `self._sync_table(...)` 写入表格，而该方法在
         模块拆分时**丢了定义** —— 面板一打开、硬件数据一到就每 tick 抛
         AttributeError。现在统一改走 `pages._set_cells`（差量写入 + 正确的
         ForegroundRole 处理：不带颜色的格子必须把前景数据清成 None，
@@ -702,7 +702,7 @@ class StutterTriageWindowBase(QMainWindow):
         """
         ⚡ 事件流页签：最近 25 条事件（差量写入，不做全表重建）。
 
-        【v1.0.4】从前这里叫 `_refresh_hardware_tabs`，会把 5 个旧页签
+        【v1.0.0】从前这里叫 `_refresh_hardware_tabs`，会把 5 个旧页签
         （CPU 热力图 / 显存 / 内存 / 着色器 / 事件流）全部刷一遍，其中三处
         调用了**不存在的** `_sync_table` —— 面板一打开就每 tick 抛
         AttributeError（被 _refresh_ui 的兜底吞掉，界面看起来"没反应"）。
@@ -1576,7 +1576,7 @@ class StutterTriageWindowBase(QMainWindow):
         bg_row.addStretch()
         lay.addLayout(bg_row)
 
-        # --- 阈值编辑表单（v1.0.4：中文人话标签 + 按归因维度分组）---
+        # --- 阈值编辑表单（v1.0.0：中文人话标签 + 按归因维度分组）---
         # 【为什么要重构】原先把原始键名当标签（spill_threshold / baseline_max_spike_frac
         # …）12 行英文标识符糊成一块，只有作者看得懂。现在：
         #   · 标签 = 「中文名（单位·默认）」；原始键名 + 说明进 tooltip；
@@ -1858,7 +1858,7 @@ class StutterTriageWindowBase(QMainWindow):
                 self._ux_config.set(key, _coerce(raw, caster, DEFAULT_CONFIG.get(key)))
             ok = self._ux_config.save()
             if ok:
-                # 【v1.0.4 修 Bug】原来写的是 apply_to_globals(globals()) —— 只把值写回
+                # 【v1.0.0 修 Bug】原来写的是 apply_to_globals(globals()) —— 只把值写回
                 # **本模块自己**的常量副本，而真正参与判定的 consts / engines / analysis /
                 # pages 四份副本一动不动：界面提示「已保存」，实际阈值要重启才生效。
                 # 不带参数即广播到所有已登记模块（consts.apply_values）。
@@ -1876,7 +1876,7 @@ class StutterTriageWindowBase(QMainWindow):
             if self._ux_config is None:
                 self._ux_config = Config()
             self._ux_config.reset_defaults()
-            self._ux_config.apply_to_globals()          # v1.0.4：广播到全部模块
+            self._ux_config.apply_to_globals()          # v1.0.0：广播到全部模块
             self._apply_runtime_thresholds()
             for key, edit in self.cfg_edits.items():
                 gname, _c, _d = CONFIG_SCHEMA[key]
@@ -1889,7 +1889,7 @@ class StutterTriageWindowBase(QMainWindow):
             self._cfg_status("恢复默认出错: %s" % ex, ok=False)
 
     def _on_reload_config(self):
-        """从磁盘重新载入配置文件（v1.0.4：同样改成广播，否则等于没重载）"""
+        """从磁盘重新载入配置文件（v1.0.0：同样改成广播，否则等于没重载）"""
         try:
             cfg = Config.load()
             self._ux_config = cfg

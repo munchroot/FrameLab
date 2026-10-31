@@ -1,21 +1,11 @@
-# StutterTriage UI 层 功能 / 接线 清单（重写前侦察）
+# StutterTriage UI 层 功能 / 接线 清单
 
-> **状态（v4.1 已完成）**：本文是重写**之前**的对照清单，用于保证「不丢行为」。
-> 其中描述 v3.2 版面的部分（左侧栏按钮堆砌、四张分位卡、双模式图表、
-> 11 行抽屉等）已被《改进建议书》要求的新版面取代；**行为契约**部分
-> （设置页 / CSV 导入导出 / ETW 二次确认 / 提权提醒 / 热键 / 数据源三态 /
-> 主题热切换 / 关闭流程）已原样迁移到 `stuttertriage/ui/base_window.py`，
-> 并由 `tests/` 下的 10 个脚本守护。旧代码已按「清理过时文件」删除，
-
+> 本文是 UI 层的**行为契约清单**：把「用户能看到/点到的东西」逐条对应到它的处理器、
+> 信号槽与定时器，用来保证重构时不丢行为。
 >
-> **v4.1 版面二次重构**：左栏 280px 手风琴抽屉 → **240px 五张大号视图导航卡**
-> （`ui/navtabs.py`）；右侧下半区 → **QStackedWidget 五页整块替换**
-> （`ui/pages.py`：帧率总览 / CPU / 显卡与显存 / 内存与磁盘 / 网络与环境）；
-> `ui/accordion.py` 已删除。同时修正 4 处算法/坐标轴误报，见 `README.md` §3.2。
-
-目标文件：`stuttertriage/` 包（`analysis.py` / `stats.py` / `ui/` 等）
-用途：UI 层（`StutterTriageWindow` 4143–7305 + 控件 3731–4142 + 引导 8041–8078）即将拆分重写；本文件是"不丢行为"的对照清单。数据/引擎层保留不动。
-
+> 数据引擎层（采集 / 归因）的契约见 [API_CONTRACT.md](API_CONTRACT.md)。
+>
+> 目标文件：`stuttertriage/` 包（`analysis.py` / `stats.py` / `ui/` 等）
 ## 0. 侦察方法与证据等级
 
 | 标记 | 含义 |
@@ -665,7 +655,7 @@ CURRENT_THEME (L346, = THEME_DEEP_SPACE)
 - `_on_import_progress` 与 `_import_progress` 只写不读（进度条真实反馈来自 `rd.total_bytes`，且 `setRange(0,0)` 下 `setValue` 无视觉意义）。
 - `_on_apply_hotkey`（L7151）是死代码且会抛 `AttributeError`（`QKeySequenceEdit.text()`）。
 - `_update_capframex_series` / `_compute_moving_average`（L5869/5899）无调用点 → `curve_ma/curve_low1/curve_lowfps` 永远无数据。
-- 顶部/底部旧入口：`⚙ 设置` 现在**全局唯一**（v3.1 有两个，L4695 注释）；`card_topbar`（L4529 getattr）在构建代码中未见赋值 —— 若重写要保留主题重刷，需补上或删掉该引用。
+- 顶部/底部旧入口：`⚙ 设置` 现在**全局唯一**（全局唯一，L4695 注释）；`card_topbar`（L4529 getattr）在构建代码中未见赋值 —— 若重写要保留主题重刷，需补上或删掉该引用。
 - `statusBar()` 三处（L6605/6659/6706）依赖 `QMainWindow`；若新外壳不是 `QMainWindow` 会 AttributeError。
 - `QApplication.setStyle("Fusion")` 在 `main()` L8063；`SetProcessDpiAwareness(1)` L8051 —— 影响全局 QSS 观感，勿丢。
 - `app.exec()` 的 `finally` 里 `DIAG.note("exit", ...)` + `DIAG.close()`（L8070–8072）。
@@ -677,71 +667,3 @@ CURRENT_THEME (L346, = THEME_DEEP_SPACE)
 `PresentMonBridge`：`.start()`、`.stop(wait,timeout)`、`.is_alive()`、`.target_process`、`.exe_path`、`.simulation_mode`、`.etw.session_name`。
 `HardwareEngine`：`.start()`、`.stop()`、`.is_alive()`、`.join(timeout)`、`.names`（NameTable）。
 `EtwSessionManager`：`list_sessions()`、`cleanup_stale(skip=)`。`BoundedQueue`：`put/get_nowait/take_dropped`。
-
-## 11. v1.0.0 变更清单（正式更名 + 版面零抖动 + CPU 频率/功率折线）
-
-| 变更 | 位置 | 说明 |
-|---|---|---|
-| 品牌/版本 | `stuttertriage/__init__.py`、`ui/main_window.py`、`build_tools/version_info.txt` | 名称固定 `StutterTriage`，版本 `1.0.0`；窗口标题 `StutterTriage 1.0.0 · 游戏卡顿一站式体检台`；EXE 属性 `1.0.0.0` |
-| 版面零抖动 | `ui/widgets.ElidedLabel` + `ui/main_window.BANNER_HEIGHT` + `ui/diagnosis.MiniDiagnosisCard.show_idle()` | 横幅固定 96px、所有动态文案单行省略；病历卡常驻 110px 占位；4 张卡高度锁死 |
-| 文案瘦身 | `ui/main_window.py`、`ui/pages.py`、`ui/gauge.FpsCard`、`stats.bottleneck` | 删 `lbl_grade_sub` / `lbl_logo_sub` / `lbl_nav_caption` / `SUBTITLE` / `lbl_subtitle` / `lbl_hint`；卡片标题去英文括注；结论改短句 |
-| CPU 频率/功率双折线 | `ui/cpu_trend.py`（新）+ `ui/pages.CpuPage.trend` + `main_window._push_cpu_trend` | 固定 104px、无坐标轴、双线各自归一化、按 `hw.seq` 去重；功率估算一律 `≈` |
-| CPU 功率探针 | `probes.CpuPowerProbe`（新）+ `models.HardwareSnapshot.cpu_power/cpu_power_est` + `engines/hardware._cpu` | PDH 功率计优先，无则按 `P_idle+(P_max−P_idle)·(f/f_max)^1.3·util` 估算（TDP 由型号粗估） |
-| 热力块均分 | `ui/widgets.CpuHeatmapGrid._grid` | 行数优先 → 12 核 6×2、16 核 8×2；块宽 96~150px 自适应撑满 |
-| 瓶颈天平可读性 | `ui/gauge.BottleneckBar.paintEvent` | 数值标签移到轨道上方（原来灰字直接压在色条上看不清） |
-| 回归测试 | `tests/test_v1_layout.py`（新） | 空载→有数据→弹/关病历卡的 (y,height) 必须完全一致；灰字属性必须真的删除；折线去重/估算标记；热力块行列 |
-
-## 12. v1.0.1 变更清单（修 bug + 版式瘦身）
-
-| 变更 | 位置 | 说明 |
-|---|---|---|
-| 换肤持久化 | `config.py` | `theme/chart_style/custom_bg` 之前写盘后读回被丢弃；现按额外键读取 + 白名单校验 |
-| KV 排版体系 | `ui/kv.py`（新）、`ui/gauge.py`、`ui/pages.py` | 标签=蓝灰胶囊、数值=高亮白/强调色；条与圆环内部不放文字 |
-| 字体与配色令牌 | `theme.py` | 浅色 `fg #1E293B` / `dim #475569`；深色 `dim #94A3B8`；`key_bg/key_fg/val`；全局字重 500 / 标题 600 |
-| 评级徽章 | `ui/gauge.GradeBadge` | 只保留大字母，删除框内两行小字 |
-| 病历卡去重 | `ui/diagnosis.py` | 标题不再重复「X 级」 |
-| CPU 页 | `ui/pages.CpuPage`、`ui/cpu_trend.py` | 删方块热力图；新增每线程折线（固定视口 + 滚动条，增量增删行不丢历史） |
-| GPU 页瘦身 | `ui/pages.GpuPage` | 3 条 → 2 条；每根条上方一行 KV；页头标题与状态合并一行 |
-| 横幅修复 | `ui/main_window.py` | 低帧率不再写「全程丝滑」；瓶颈区压成 3 行（数值/条/结论） |
-| 卡片极简 | `ui/gauge.FpsCard` | 13px 标题 + 28px 数字 + 最多一行副文本（两行小字合并） |
-| 回归测试 | `tests/test_v1_layout.py` §10/§11 | 换肤持久化（含脏值回落）；字体令牌与全局字重 |
-
-## 13. v1.0.2 变更清单（三张截图返修）
-
-| 变更 | 位置 | 说明 |
-|---|---|---|
-| 归因表不再横滚 | `ui/diagnosis.py` | 第 5 列 `Stretch` + 关横滚 + 行高按内容；最后一行不再被滚动条压掉、长结论不再被截断 |
-| 灰字根因 | `ui/diagnosis.py`、`ui/pages._set_cells` | 空 `QtGui.QBrush()` 前景 → 委托退化成 palette 色；改为显式前景 / 清掉 `ForegroundRole` |
-| 主题化告警底色 | `theme.py` 新增 `mix/luminance/contrast_on` | 删除写死的 `#3d1418` / `#38240b`，浅色主题下也能读 |
-| CPU 页空白 | `ui/pages.CpuPage`、`ui/cpu_trend.py` | KV 面板 `Maximum` 贴内容；线程列表视口可伸缩（138px 起） |
-| 每线程折线自适应窗口 | `ui/cpu_trend.py` | 共享窗口（中位数 ± 跨度，跨度封顶 25% 峰值）；窄幅波动不再画成直线 |
-| 图表内文字 | `ui/gauge.CpuFreqBars` | 删除柱顶 `4594` |
-| 换页 Top 空表 | `ui/pages.MemPage` | 写明"换入 < 2MB/s 未做进程级归因"/"采样中"；列名改 `缺页 MB/s`（PSAPI 含软缺页）；过滤 0 值 |
-| 能量条量程 | `ui/pages.MemPage` | 下限 32/64 → 1/4 MB/s（0.2MB/s 也能看见） |
-| 状态胶囊截断 | `ui/widgets.ElidedLabel` | `sizeHint()` 按全文计算 |
-| 回归测试 | `tests/test_v1_layout.py` §12~§15 | 归因表可读性 / CPU 页版面与窗口 / 换页归因 / ElidedLabel 尺寸反馈 |
-
-## 14. v1.0.3 变更清单（白底可读性 + CPU 页合并）
-
-| 变更 | 位置 | 说明 |
-|---|---|---|
-| 白底红/橙看不清 | `ui/plain.py`、`theme.py` | `LEVEL_COLOR`/`GRADE_COLOR` 由写死色板改为「角色名 + 按主题解析」，浅色 warn/orange 压深到 ≥4.5:1 |
-| CPU 页合并成一张卡 | `ui/pages.CpuPage` | 新增 `QFrame#CpuFreqCard`：两列 KV + 竖分隔线 + 均频/功率折线 + 每线程折线；柱状图独立 |
-| 每线程折线更明显 | `ui/cpu_trend.py` | 行高 28、火花线 24、线宽 2.2、渐变填充、行尾圆点、斑马纹；数值 12px/700 |
-| 趋势图内嵌层次 | `ui/cpu_trend.CpuTrendChart` | 卡片内底色改用 `th.panel`，与卡片 `panel2` 形成内凹 |
-| 回归测试 | `tests/test_v1_layout.py` §13/§16 | 合并卡结构 + 柱状图在卡外 + 折线像素级可见性；浅色主题对比度审计 |
-
-## 15. v1.0.4 变更清单（设置面板瘦身 + 诊断节流）
-
-| 变更 | 位置 | 说明 |
-|---|---|---|
-| 「StutterTriage 自己卡住」根治 | `ui/main_window.py` | `inspect()` 会话级归因缓存键含帧数 → 实时采样永不命中；顿挫横幅 / 自动弹卡 / 锁定卡跟随三条 30Hz 路径改为 ≥0.5 s / ≥1 s / ≥1 s 节流（`DIAG_RENDER_INTERVAL`、`AUTO_POPUP_INTERVAL`、`DIAG_FOLLOW_INTERVAL`）；`_page_ctx` 复用 `visible_frames`。10 万帧 + 14% 卡顿帧：p50 35.8–39.2 ms → 3.2–3.3 ms（×11–12.4），算法与文案零改动 |
-| 设置面板瘦身 | `ui/main_window.py`、`ui/base_window.py` | 6 页签 → 2 页签（⚙ 设置 / ⚡ 事件流）；删 4 个 v3.2 遗留页签（CPU 热力图 / 显存监视 / 内存换入 / 着色器与引擎）及其对已丢失的 `_sync_table` 的每 tick 调用；齿轮菜单删「展开进阶硬件面板」「打开 PresentMon 目录」与一个死控件 |
-| 设置页人话化 | `config.py`、`ui/base_window.py` | `CONFIG_LABELS`（中文名 + 单位·默认）+ `CONFIG_GROUPS`（显存 / CPU / 着色器 / 采集 / 平稳基线·进阶）驱动表单；原始键名与解释进 tooltip；未登记键有兜底表单 |
-| 阈值保存真生效 | `ui/base_window.py`、`config.py` | 保存 / 恢复默认 / 重新载入三处 `apply_to_globals(globals())` → `apply_to_globals()`（广播到 consts/engines/analysis/pages）；恢复默认改为先广播再回填输入框 |
-| 死代码删除 | `ui/widgets.py` | `CpuHeatmapGrid`、`heat_color`、`_text_on`、`HEAT_STOPS` 移除 |
-| 主题下拉框跟随 | `ui/base_window.py`、`ui/main_window.py` | 新增 `_sync_theme_combo()`：自定义背景色 / 预览脚本 / 测试直接 `_apply_theme()` 时，下拉框不再残留旧主题名（深色页面配「浅色（白底）」的错位） |
-| 采集控制（追加） | `ui/base_window.py`、`ui/main_window.py`、`analysis.py` | 默认不采集（`_collect_started=False`），未开始时队列产出丢弃；主按钮三态「开始/暂停/继续」；新增「🧹 清空重采」→ `FrameStore.reset()` + 清曲线/卡片/缓存后重新采样（暂停中 = 清空并继续）；切模拟流自动进入采集态 |
-| 数轴可缩放（追加） | `ui/chart.py`、`ui/main_window.py` | 监听 `sigRangeChangedManually` → `_user_zoom=True` 后停止每帧锁轴（切视角/清空才复位）；空图不再每 tick `clear()`；等待态横幅写明确原因。回归 `test_chart_axis.py` A10 |
-| 未采集也有心跳（追加） | `ui/base_window.py`、`ui/main_window.py` | 未开始采集时 `_drain_hardware_only()` 只放行硬件快照（帧/告警丢弃）；硬件四页、导航徽章、顶部瓶颈条 100ms 刷新；`_had_frames` 控制卡片复位时机；`_toggle_pause` 350ms 防连点 |
-| 回归测试 | `tests/test_v1_layout.py` §1/§6/§6b/§6c | 品牌 1.0.4；旧页签与死代码不存在；设置页无原始键名 + 分组齐全 + 保存后三处副本同步；60 tick 内 `inspect` ≤3 次 |

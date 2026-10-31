@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 StutterTriage 1.0.x 回归：版面零抖动 + 文案瘦身 + CPU 折线 + 品牌/版本 +
-v1.0.4「设置按钮瘦身 + 诊断节流（根治自己卡住）」。
+v1.0.0「设置按钮瘦身 + 诊断节流（根治自己卡住）」。
 
 【这份测试盯的是「用户看得见 / 用户感觉得到」的几条】
   一、卡牌不许再随曲线出现而上下动 —— 横幅/卡牌/图表/病历卡的 y 坐标在所有
@@ -9,7 +9,7 @@ v1.0.4「设置按钮瘦身 + 诊断节流（根治自己卡住）」。
   二、装饰性灰字已删除（不存在的属性必须真的不存在，避免有人"顺手加回来"）；
   三、CPU 页的频率/功率双折线：按快照 seq 去重、估算值必须带 est 标记、
       功率探针在无功率计的机器上必须退化为「估算」而不是编造实测；
-  四、品牌与版本：StutterTriage 1.0.4；
+  四、品牌与版本：StutterTriage 1.0.0；
   五、**设置按钮里的老东西清干净**（只剩设置 + 事件流两个页签，
       CpuHeatmapGrid / heat_color / _sync_table 那一批死代码全删）；
   六、**诊断全量重算被节流**（60 tick 内 inspect ≤3 次，而不是每 tick 一次）——
@@ -106,17 +106,17 @@ def wait_stable(app, win, timeout_ms=2000):
 
 # ==============================================================================
 def test_brand():
-    print("== 1. 品牌与版本：StutterTriage 1.0.4 ==")
+    print("== 1. 品牌与版本：StutterTriage 1.0.0 ==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
     win = StutterTriageWindow()
-    check("__version__ = 1.0.4", stuttertriage.__version__ == "1.0.4", stuttertriage.__version__)
+    check("__version__ = 1.0.0", stuttertriage.__version__ == "1.0.0", stuttertriage.__version__)
     title = win.windowTitle()
-    check("窗口标题 = StutterTriage 1.0.4 …", title.startswith("StutterTriage 1.0.4"), title)
+    check("窗口标题 = StutterTriage 1.0.0 …", title.startswith("StutterTriage 1.0.0"), title)
     check("标题里没有旧品牌「卡顿减减」", "卡顿减减" not in title, title)
     check("侧栏 LOGO 也没有旧品牌", "卡顿减减" not in win.lbl_logo.text(), win.lbl_logo.text())
     with open(os.path.join(ROOT, "build_tools", "version_info.txt"), "r", encoding="utf-8") as f:
         vi = f.read()
-    check("version_info 里是 1.0.4.0", "1, 0, 4, 0" in vi and "1.0.4.0" in vi)
+    check("version_info 里是 1.0.0.0", "1, 0, 0, 0" in vi and "1.0.0.0" in vi)
     check("version_info 里没有旧品牌", "卡顿减减" not in vi)
     win.close()
     win.deleteLater()
@@ -282,7 +282,7 @@ def test_cpu_trend():
 
 
 def test_legacy_panel_gone():
-    """§6 v1.0.4：设置按钮里的老东西必须清干净（只留设置 + 事件流）"""
+    """§6 v1.0.0：设置按钮里的老东西必须清干净（只留设置 + 事件流）"""
     print("== 6. 设置按钮瘦身：旧硬件页签 / 死代码全部移除 ==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
     win = StutterTriageWindow()
@@ -338,7 +338,7 @@ def test_legacy_panel_gone():
 
 
 def test_settings_grouped():
-    """§6b v1.0.4：阈值表单不许再拿原始键名当标签；保存必须真的广播到各模块"""
+    """§6b v1.0.0：阈值表单不许再拿原始键名当标签；保存必须真的广播到各模块"""
     print("== 6b. 设置页人话化 + 阈值保存真的生效 ==")
     import tempfile
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
@@ -362,7 +362,7 @@ def test_settings_grouped():
           "spill_threshold" in win.cfg_edits["spill_threshold"].toolTip(),
           win.cfg_edits["spill_threshold"].toolTip()[:40])
 
-    # ---- 保存必须广播到真正参与判定的模块（v1.0.4 修：以前只改本模块副本）----
+    # ---- 保存必须广播到真正参与判定的模块（v1.0.0 修：以前只改本模块副本）----
     import stuttertriage.consts as C
     import stuttertriage.engines.hardware as HW
     import stuttertriage.analysis as AN
@@ -397,7 +397,7 @@ def test_settings_grouped():
           len([k for k in cfg
                if k not in [x for _t, _d, ks in F.CONFIG_GROUPS for x in ks]]) == 0)
 
-    # ---- 主题下拉框必须跟随真正生效的主题（v1.0.4 顺手修）----
+    # ---- 主题下拉框必须跟随真正生效的主题（v1.0.0 顺手修）----
     from stuttertriage import theme as T
     before = T.CURRENT_THEME
     try:
@@ -418,7 +418,7 @@ def test_settings_grouped():
 
 
 def test_diag_throttle():
-    """§6c v1.0.4：诊断全量重算必须被节流（否则 10 万帧会话把 UI 拖死）"""
+    """§6c v1.0.0：诊断全量重算必须被节流（否则 10 万帧会话把 UI 拖死）"""
     print("== 6c. 「StutterTriage 自己卡住」回归：inspect 节流 ==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
     win = StutterTriageWindow()
@@ -918,7 +918,7 @@ def test_mem_pagein():
     print("== 14. 内存页换页归因（用户提问：空表是 bug 还是真没换页）==")
     app = QtWidgets.QApplication.instance() or QtWidgets.QApplication(sys.argv)
     win = StutterTriageWindow()
-    # 【v1.0.4 心跳】未采集时窗口会每 100ms 用真实快照刷新硬件页；
+    # 【v1.0.0 心跳】未采集时窗口会每 100ms 用真实快照刷新硬件页；
     # 本节直接构造 hw 手动刷 MemPage，必须停掉定时器，否则断言被真实数据覆盖。
     win.ui_timer.stop()
     win._on_nav_clicked(3)

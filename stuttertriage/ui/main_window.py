@@ -66,7 +66,7 @@ class StutterTriageWindow(StutterTriageWindowBase):
     BADGE_POLL = 6                   # 左栏徽章节拍（≈200ms）
     BANNER_HEIGHT = 96               # 顶部横幅固定高度（版面零抖动的核心常量）
 
-    # ================= 【v1.0.4 修「自己卡住」】诊断重算节流 =================
+    # ================= 【v1.0.0 修「自己卡住」】诊断重算节流 =================
     # SnapshotDiffInspector.inspect() 末尾的会话级归因（session_correlations）
     # 是 O(全部帧 × 卡顿帧)，且缓存键包含帧数 —— 实时采集时帧数每 tick 都变，
     # 缓存永远不命中。旧实现里它被三条路径以 30Hz 反复触发：
@@ -85,7 +85,7 @@ class StutterTriageWindow(StutterTriageWindowBase):
     # 版面
     # ================================================================
     def _init_ui(self):
-        self.setWindowTitle("StutterTriage 1.0.4 · 游戏卡顿一站式体检台")
+        self.setWindowTitle("StutterTriage 1.0.0 · 游戏卡顿一站式体检台")
         self._apply_global_stylesheet()
         self._stat_cache = None
         self._last_rows = []
@@ -341,7 +341,7 @@ class StutterTriageWindow(StutterTriageWindowBase):
         """
         设置与事件流面板（独立非模态窗口）。
 
-        【v1.0.4 清理「设置按钮里的老东西」】删掉 v3.2 时代的 5 个硬件页签
+        【v1.0.0 清理「设置按钮里的老东西」】删掉 v3.2 时代的 5 个硬件页签
         （CPU 热力图 / 显存监视 / 内存换入 / 着色器与引擎 / 事件流）：
           · CPU 热力图 —— v1.0.1 已按用户要求从主界面删除方块热力图；
           · 显存监视 / 内存换入 / 着色器与引擎 —— 与主界面 5 个导航页
@@ -372,7 +372,7 @@ class StutterTriageWindow(StutterTriageWindowBase):
         """
         齿轮菜单（⚙）：只保留真正有用的入口。
 
-        【v1.0.4 清理】删掉两条老东西：
+        【v1.0.0 清理】删掉两条老东西：
           · 🚀 展开进阶硬件面板 —— 新版面已把硬件信息全部搬到 5 个导航页；
           · 📁 打开 PresentMon 目录 —— 设置页里已有「打开目录」按钮，
             且原来这里还顺手 new 了一个从未加进菜单的 QPushButton（死控件）。
@@ -478,7 +478,7 @@ class StutterTriageWindow(StutterTriageWindowBase):
         """
         页面刷新上下文（PresentMon 忙时比 / 平均帧 / 三档评价 / 顿挫状态）。
 
-        【v1.0.4 性能】frames 可由调用方传入（主刷新循环已经取过一次
+        【v1.0.0 性能】frames 可由调用方传入（主刷新循环已经取过一次
         `visible_frames`）—— 否则这里会**再复制一份**最多 10 万帧的列表，
         每 tick 白花几毫秒（会话越长越贵）。
         """
@@ -663,7 +663,7 @@ class StutterTriageWindow(StutterTriageWindowBase):
         self.lbl_bn_advice.setText(bn.get("advice") or "")
 
         # ---- 顶部横幅 + 病历卡：严格顿挫判定（改进建议书 五）----
-        # 【v1.0.4 修「StutterTriage 自己卡住」】inspect() 结尾的会话级归因是
+        # 【v1.0.0 修「StutterTriage 自己卡住」】inspect() 结尾的会话级归因是
         # O(全部帧 × 卡顿帧)、且缓存键含帧数（实时采集时永不命中），旧实现
         # 在顿挫期间每 33ms 全量重算（自动弹卡还会再算一遍），会话一长就把
         # UI 线程拖死。现在：横幅 ≥0.5s 重算一次；自动弹卡 ≥1s 至多一次；
@@ -852,7 +852,7 @@ class StutterTriageWindow(StutterTriageWindowBase):
         self._diag_strict = (bool(strict) if strict is not None
                              else self._frame_is_stutter(frame))
         self._render_diagnosis(frame, st, strict=self._diag_strict)
-        # 【v1.0.4】刚刚全量渲染过 → 记时，避免锁定卡的跟随刷新立刻再来一遍
+        # 【v1.0.0】刚刚全量渲染过 → 记时，避免锁定卡的跟随刷新立刻再来一遍
         self._diag_render_ts = time.time()
         self.diag_card.setVisible(True)
 
@@ -934,7 +934,7 @@ class StutterTriageWindow(StutterTriageWindowBase):
             self.fps_chart.apply_theme(theme)
             self._restyle_static_labels()
             self._restyle_chart()
-            # v1.0.4：主题下拉框跟随（自定义背景色 / 预览脚本 / 测试等
+            # v1.0.0：主题下拉框跟随（自定义背景色 / 预览脚本 / 测试等
             # 不走 combo 回调的路径，否则下拉框会残留旧主题名）
             self._sync_theme_combo(theme)
             if self._pro_dialog is not None:

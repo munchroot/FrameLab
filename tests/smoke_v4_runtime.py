@@ -166,7 +166,7 @@ def main():
     print("== B. 建窗（规范一：240px 导航卡 + QStackedWidget）==")
     win = F.StutterTriageWindow()
     pump(app, 200)
-    check("窗口标题含版本号", "StutterTriage 1.0.4" in win.windowTitle(), win.windowTitle())
+    check("窗口标题含版本号", "StutterTriage 1.0.0" in win.windowTitle(), win.windowTitle())
     check("左栏固定 240px", win.sidebar.width() == 240 and win.sidebar.maximumWidth() == 240,
           str(win.sidebar.width()))
     check("5 张大号导航卡", len(win.nav_tabs) == 5, str(len(win.nav_tabs)))
@@ -433,7 +433,7 @@ def main():
     check("主题下拉框", win.combo_theme is not None)
     check("导入进度条存在", win.progress_import is not None)
     check("打点按钮存在", win.btn_mark is not None)
-    check("设置/事件流面板 2 个页签（v1.0.4 瘦身）", win.hw_tabs.count() == 2,
+    check("设置/事件流面板 2 个页签（v1.0.0 瘦身）", win.hw_tabs.count() == 2,
           str(win.hw_tabs.count()))
     check("面板标题 = 设置与事件流", "设置与事件流" in win.hw_panel.windowTitle(),
           win.hw_panel.windowTitle())

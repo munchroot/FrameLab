@@ -162,7 +162,7 @@ def main():
     print("== 7. 其它 UX 元素 ==")
     check("启动权限提醒已接线（v3.2：启动弹窗承担，不再占顶栏）",
           hasattr(win, "_show_admin_prompt") and hasattr(win, "_schedule_admin_prompt"))
-    check("PresentMon 目录入口改在设置页（v1.0.4 删掉齿轮菜单里的重复项与死控件）",
+    check("PresentMon 目录入口改在设置页（v1.0.0 删掉齿轮菜单里的重复项与死控件）",
           hasattr(win, "btn_pm_open_dir") and not hasattr(win, "btn_pm_dir"))
     check("设置 Tab 存在", win.tab_settings is not None)
     check("设置 Tab 里的阈值编辑框数量正确",

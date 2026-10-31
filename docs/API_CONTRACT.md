@@ -520,7 +520,7 @@ The "帧表现" row is deliberately excluded (it is a symptom, not a cause). Fal
 
 ## 11. Module-level constants referenced by these ranges (name, value, definition line)
 
-Threshold / behaviour constants (all in the `§1b 旧版模块级常量` block unless noted):
+Threshold / behaviour constants (all in the `§1b 模块级常量` block unless noted):
 
 | Constant | Value | Def line | Used in range at |
 |---|---|---|---|
@@ -618,7 +618,7 @@ Capacities / windows: `FrameStore(max_frames=100000, max_snaps=20000)`; `events`
 
 ---
 
-## 15. v4.1 增补：判定口径与新增纯函数（`stuttertriage/stats.py` / `stuttertriage/consts.py`）
+## 15. 判定口径与纯函数：判定口径与新增纯函数（`stuttertriage/stats.py` / `stuttertriage/consts.py`）
 
 本节是拆分 & 二次重构之后的**增量契约**；第 0~14 节描述的单体 API 依然有效。
 
@@ -658,83 +658,3 @@ Capacities / windows: `FrameStore(max_frames=100000, max_snaps=20000)`; `events`
 `ui/gauge.py` 新增 `CpuFreqBars` / `VramSplitBar` / `vram_text()`；`ui/accordion.py` 已删除；
 `ui/diagnosis.MiniDiagnosisCard` 新增 `show_smooth()`（绿色「全程运行丝滑」态）与 `is_smooth_state()`。
 `chart.FpsChart` 新增 `ms_ref_lines`（16.7 / 33.3 ms 两条参考虚线）并锁死坐标轴（见 `README.md` §3.2 表）。
-
-### 15.4 v1.0.0 新增/变更（UI 层 + 一个新探针字段）
-
-| 项 | 契约 |
-|---|---|
-| `models.HardwareSnapshot` | **新增字段** `cpu_power`（float \| None，W）、`cpu_power_est`（bool，默认 True）。`None` = 本机既无功率计也无法估算；`cpu_power_est=True` 表示**估算值**，界面必须显示成 `≈48 W` |
-| `probes.CpuPowerProbe` | `read(freq_avg_mhz, freq_max_mhz, util_pct) -> (watts \| None, is_estimate, source)`；`source ∈ {"pdh","estimate","none"}`；`measured` / `cpu_name` / `tdp_hint` 只读属性；`close()`。**只给 UI 画走势，不进入任何归因判定** |
-| `HardwareEngine._cpu` | 采集后调用一次 `power_probe.read(...)` 填 `cpu_power` / `cpu_power_est`（包在 try/except，采样链绝不因功率失败而中断） |
-| `ui/cpu_trend.CpuTrendChart` | `push(seq, freq_avg_mhz, freq_max_mhz, power_w, power_est=False)`（`seq` 相同则忽略）、`clear()`、`samples() -> (freqs, powers)`、`HEIGHT = 76`（`setFixedHeight`，不参与拉伸） |
-| `ui/widgets.ElidedLabel` | QLabel 子类：`setText()` 后自动按宽度截断（`…`）、`fullText()` 取全文、`set_tooltip_enabled(bool)`；`wordWrap=False` 且纵向 `Fixed` —— 版面零抖动的基础件 |
-| `ui/diagnosis.MiniDiagnosisCard` | 新增 `show_idle()`（中性占位，与真卡同高）；**不再 hide()**：`_on_close` 与主窗口复位路径一律走 `show_idle()` |
-| `ui/pages._Page` | 删除 `SUBTITLE` / `lbl_subtitle`；`lbl_verdict` / `lbl_advice` 改为 `ElidedLabel`（单行 + tooltip） |
-| `ui/main_window.StutterTriageWindow` | 新增常量 `BANNER_HEIGHT = 96`（横幅固定高度）、`_push_cpu_trend(hw)`（每 tick 喂 CPU 折线，与当前页无关） |
-
-### 15.5 v1.0.1 新增/变更
-
-| 项 | 契约 |
-|---|---|
-| `config.Config.update` | **修 Bug**：`theme` / `chart_style` / `custom_bg` 现在真正被读回（此前写进文件却在 update 时被丢弃 → 换肤重启丢失）。新增 `VALID_THEMES` / `VALID_CHART_STYLES` 白名单，脏值回落默认 |
-| `ui/kv.py`（新） | `KeyChip`（低明度蓝灰胶囊标签）、`KVRow`（左标签 / 右数值）、`KVGrid`（含 `add_widget` 供图形插入）、`KVPanel`；`value_color(theme, role)` 决定数值用纯白还是强调色 |
-| `theme.Theme` | 新增派生令牌 `key_bg` / `key_fg` / `val`（不占构造参数，`copy()` 自动带上）；浅色 `fg=#1E293B`、`dim=#475569`，深色 `dim=#94A3B8` |
-| `ui/gauge.GradeBadge` | 只画大字母；标签进 tooltip（不再压边框） |
-| `ui/gauge.FpsCard` | 三层结构：13px/600 标题 + 28px 数值 + 最多一行副文本（`sub_text` 与 `tail_text` 用 ` · ` 合并） |
-| `ui/gauge.CapsuleBar / MiniEnergyBar / NetRateBars / VramSplitBar / BottleneckBar` | 一律**纯图形**：条内/条上不写标签（`text` / `tail_text` 参数保留但被忽略）；`MiniEnergyBar` 改横向（8px 高） |
-| `ui/pages._Page` | 页头 = 标题（左）+ 状态胶囊（右，`lbl_verdict` 带同色底），下面只留一行建议；`SUBTITLE` 已删除 |
-| `ui/cpu_trend.CpuThreadTrends / CpuThreadRow` | 每线程一行折线，`VIEW_H=138` 固定视口 + 竖直滚动条；`set_cores()` 为**增量**增删（不丢历史）；`push(seq, freqs, usages)` 按 seq 去重 |
-| `ui/pages.CpuPage` | 删除 `heat`（方块热力图）与图例；改为「总览 KV + 总览折线 + 每线程折线 + 柱状图」 |
-| `ui/pages.GpuPage` | 2 根条（核心频率 / 显存占用），每根上方一行 KV；删除第 3 根共享显存条；`row_temp` / `row_peak` 已并入频率行 |
-| `ui/diagnosis.MiniDiagnosisCard` | 标题去掉「X 级」（等级只在徽章出现一次）；`_mode` 标记 idle/smooth/frame |
-| `ui/main_window` | 横幅右列 = 数值行（`lbl_cpu_num` / `lbl_gpu_num`）+ 天平条 + 一句结论；低帧率文案改「· 帧率偏低」 |
-
-### 15.6 v1.0.2 新增/变更
-
-| 项 | 契约 |
-|---|---|
-| `theme.mix(color, other, ratio)` / `theme.luminance(c)` / `theme.contrast_on(color, bg, need=0.30)` | **新增公开工具**：UI 层凡是要画"底色/告警底"一律从这里派生，禁止再写死 `#3d1418` 这类深色主题专用色；`contrast_on` 保证前景与底色亮度差 ≥ need |
-| `ui/diagnosis.ProfessionalTableDialog` | 第 5 列 `Stretch`、前 4 列 `ResizeToContents`、`HorizontalScrollBarPolicy=AlwaysOff`、垂直表头 `ResizeToContents`（行高随换行自适应）；`_paint(severity) -> (bg, body, hot)` 提供主题化配色；默认尺寸 1240×600 |
-| `ui/diagnosis._sync` | 每个单元格**必须**有显式前景色；`BackgroundRole` 用 `setData(..., None)` 复位（不再用空 `QBrush()`） |
-| `ui/pages._set_cells` | 同上修 Bug：`fg=None` 时清掉 `ForegroundRole` 数据，而不是塞一个空 QBrush |
-| `ui/cpu_trend.CpuThreadTrends` | `MIN_H=138`（旧 `VIEW_H` 保留为别名）+ **视口可伸缩**（`setMinimumHeight`，不再 `setFixedHeight`）；新增 `auto_window() -> (lo, hi) \| None`（全线程共享窗口：中位数 ± 跨度/2，跨度 = clamp(极差, 6% 满频, 25% 峰值)） |
-| `ui/cpu_trend.CpuThreadRow` | 新增 `set_window(lo, hi)`；`_Spark` 按该窗口绘制（无窗口时回退 `0..max_mhz`） |
-| `ui/pages.CpuPage` | `kv` / `kv_core` 纵向策略 = `Maximum`（贴内容）；`threads` 与 `bars` 分别 stretch=3 / 2 分享剩余高度 |
-| `ui/gauge.CpuFreqBars` | 删除柱顶频率数字（图表内不放文字） |
-| `ui/pages.MemPage` | `换页 Top` 列名 → `缺页 MB/s`；空表时写出门槛原因（`PAGEIN_TOP_GATE_MB = 2.0`，与 `engines/hardware.py` 的 `page_in > 2.0` 对齐）；`rate<=0` 的进程被过滤；能量条量程下限 1/4 MB/s |
-| `ui/widgets.ElidedLabel.sizeHint()` | **修 Bug**：按 `fullText()` 计算宽度（+26px 内边距），不再按"已被省略的显示文本"算，否则截断后永远长不回去 |
-
-### 15.7 v1.0.3 新增/变更
-
-| 项 | 契约 |
-|---|---|
-| `ui/plain.LEVEL_COLOR` / `GRADE_COLOR` | **修 Bug**：不再是写死的十六进制（`#ff5d5d` 等深色专用色板，白底上对比度 2.4:1），改为 `_ThemeMap` —— 每次 `[k]` / `.get(k)` 都按 `CURRENT_THEME` 解析；新增函数 `level_color(level, theme=None)`、`grade_color(grade, theme=None)`；`LEVEL_ROLE` / `GRADE_ROLE` 暴露"级别→主题字段"映射 |
-| `theme.THEME_LIGHT` | `warn` `#b26a00`→`#9a5b00`、`orange` `#d84315`→`#c23c11`（浅色主题所有语义色对 `#ffffff`/`#eceff3`/`#f5f6f8` 对比度 ≥4.5:1）；`theme_from_custom_bg()` 的浅色分支同步 |
-| `ui/pages.CpuPage.card_freq` | 新增 `QFrame#CpuFreqCard`：内含 `kv`(KVGrid) + `sep`(竖分隔线) + `kv_core`(KVGrid) + `trend`(CpuTrendChart) + `lbl_threads` + `threads`(CpuThreadTrends)；`bars` 仍在其外；`body` 拉伸比 `card_freq:bars = 5:1` |
-| `ui/cpu_trend.CpuThreadRow` | `ROW_H = 28`（原 22）；新增 `paintEvent`（奇数行斑马纹 / 高占用琥珀底）与 `line_color()`；数值字号 12px/700 |
-| `ui/cpu_trend._Spark` | 高 24（原 16）；主线 2.2px 圆头 + 曲线下方同色渐变填充（alpha 64→6）+ 行尾当前值圆点 + 半高虚线基准 |
-| `ui/cpu_trend.CpuTrendChart` | 内嵌进合并卡：底色由 `panel2@150` 改为 `panel@220`（"凹陷屏幕"层次） |
-
-### 15.8 v1.0.4 新增/变更
-
-| 项 | 契约 |
-|---|---|
-| `ui/main_window.StutterTriageWindow.DIAG_RENDER_INTERVAL` | 类属性 = `0.5`（秒）：**顿挫横幅 + 锁定卡跟随**两条路径的会话归因全量重算最小间隔，闸门用 `_diag_render_ts`。旧实现三条路径以 30Hz 调 `SnapshotDiffInspector.inspect()`，而该函数的缓存键含帧数（实时采集每 tick 都变）→ 10 万帧会话单 tick ≈36–39 ms，把 33 ms UI 定时器彻底淹没（即用户报告的「StutterTriage 自己卡住」） |
-| `StutterTriageWindow.AUTO_POPUP_INTERVAL` | 类属性 = `1.0`（秒）：顿挫自动弹病历卡最小间隔，闸门用 `_auto_popup_ts` |
-| `StutterTriageWindow.DIAG_FOLLOW_INTERVAL` | 类属性 = `1.0`（秒）：锁定帧病历卡跟随刷新间隔（与横幅共用 `_diag_render_ts` 闸门） |
-| `StutterTriageWindow._page_ctx(hw, frames=None)` | 复用一个 tick 内已取的 `visible_frames` 列表；**禁止**再按页调用 `store.visible_frames()` 复制最多 10 万帧 |
-| `ui/base_window` 面板结构 | `hw_panel` 只剩 2 个页签：`tab_settings`（⚙ 设置）/ `tab_events`（⚡ 事件流）；刷新唯一入口 `_refresh_events_tab()`（旧 `_refresh_hardware_tabs` 与 4 个旧页签构建器、`_on_toggle_hw_panel`、`_update_hw_panel_button` 已删除）；事件表用 `pages._set_cells` 差量写入 |
-| `config.CONFIG_LABELS` / `config.CONFIG_GROUPS` | 设置页呈现契约：`CONFIG_LABELS[key] = (中文名, 单位·默认)`；`CONFIG_GROUPS = ((组标题, 一句话说明, keys), ...)`，顺序即渲染顺序；原始键名/说明只进 tooltip。`CONFIG_SCHEMA` 中未登记分组的键必须落到「兜底」表单 —— 只改呈现，键名/类型/读写逻辑不动 |
-| `config.Config.apply_to_globals(module_globals=None)` | 不传参 = 广播到 `consts.bind_globals()` 登记的全部模块；UI 的**保存阈值 / 恢复默认 / 重新载入**必须不带参调用（旧写法 `apply_to_globals(globals())` 只改 base_window 自己那份副本，界面提示「已保存」但判定用的 consts/engines/analysis/pages 四份副本不变，要重启才生效） |
-| `ui/base_window._sync_theme_combo(theme)` | 把设置页「主题」下拉框同步到当前生效主题（`findData(theme.key)` + `blockSignals`）。`_apply_theme()` 的两处实现（base / main_window 覆盖版）结尾都必须调用 —— 自定义背景色、预览脚本、测试直接换肤都不经过 `currentIndexChanged`，不调就会显示旧主题名 |
-| `ui/widgets` 删除项 | `CpuHeatmapGrid`、`heat_color`、`_text_on`、`HEAT_STOPS` 不再存在（主 CPU 页与设置面板均不再引用；若有新代码 import 这些名字应视为破坏契约） |
-| `analysis.FrameStore.reset()` | 清空整段会话（帧 / 硬件快照 / 事件 / 着色器时间轴 / 基线 / 全部派生索引与缓存），容量沿用当前 maxlen；UI 线程唯一写者，直接 `self.__init__` 重建 |
-| `ui/base_window._collect_started` | 采集态开关：`False`（刚启动，未开始）/ `True`（已开始，可暂停）。启动时**不**开始采集 |
-| `_begin_collection()` / `_discard_pending()` | 进入采集前先丢弃队列残留（避免把启动期间的历史灌进曲线）；`_discard_pending()` 返回丢弃条数，队列空时返回 0 |
-| `ui/main_window._refresh_ui_inner()` | 未开始采集时只 `_discard_pending()`、不 `_drain_queue()`，引擎徽章写「未开始采集（点「▶ 开始采集」）」；开始后行为与旧版一致 |
-| `ui/main_window._on_resample_curves()` | 「🧹 清空重采」：`store.reset()` + 清空 `fps_chart` / 四张大卡 / 统计与诊断缓存 / 锁定帧，然后 `_begin_collection()`（暂停中 = 清空并继续） |
-| `ui.chart.FpsChart._user_zoom` / `_on_manual_range()` | 监听 `ViewBox.sigRangeChangedManually`（滚轮 / 拖拽 / 框选都会发）；置 True 后 `_apply_axis_limits()` 直接放行，**不得**再每帧 `setXRange/setYRange`。复位时机：`clear()`（清空重采）与 `set_mode()`（FPS/ms 切换）。旧实现每帧强设范围，手动缩放下一帧即被抹掉（「数轴无法放大」） |
-| `ui/main_window._refresh_ui_inner()`（空载分支） | 未开始采集 / 等待帧时横幅写明确原因（未开始 → 点「▶ 开始采集」；已开始 → 无数据请用管理员运行）；空图仅在 `fps_chart._frames` 非空时 `clear()`，禁止每 tick 重复清空 |
-| `ui/base_window._drain_hardware_only()` | 未开始采集时的队列消费方式：只 `add_snapshot`（硬件心跳），`frame` / `event` / `status` 丢弃；`_discard_pending()` 仍是全丢弃（开始采集/清空时用） |
-| `ui/base_window._toggle_pause()` | 三态入口 + **350ms 防连点**：`_begin_collection()` 会写 `_last_pause_ts`；`now - _last_pause_ts < 0.35` 时忽略点击（防止一次物理点击两次投递导致「开始→立刻暂停」） |
-| `StutterTriageWindow._had_frames` | 空载分支只在「有帧 → 无帧」时 `_reset_cards()`；否则每 tick 复位会把刚写的 CPU/显卡数字冲回 `--%` |

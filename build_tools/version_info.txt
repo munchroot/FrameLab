@@ -3,8 +3,8 @@
 # 与 stuttertriage/__init__.py 的 __version__ 保持一致。
 VSVersionInfo(
     ffi=FixedFileInfo(
-        filevers=(1, 0, 4, 0),
-        prodvers=(1, 0, 4, 0),
+        filevers=(1, 0, 0, 0),
+        prodvers=(1, 0, 0, 0),
         mask=0x3f,
         flags=0x0,
         OS=0x40004,
@@ -17,14 +17,14 @@ VSVersionInfo(
             StringTable(
                 "080404B0",
                 [
-                    StringStruct("CompanyName", "StutterTriage"),
+                    StringStruct("CompanyName", "大肥鱼"),
                     StringStruct("FileDescription", "StutterTriage · 游戏卡顿一站式体检台"),
-                    StringStruct("FileVersion", "1.0.4.0"),
+                    StringStruct("FileVersion", "1.0.0.0"),
                     StringStruct("InternalName", "StutterTriage"),
-                    StringStruct("LegalCopyright", "本机自用工具"),
+                    StringStruct("LegalCopyright", "© 2026 大肥鱼"),
                     StringStruct("OriginalFilename", "StutterTriage.exe"),
                     StringStruct("ProductName", "StutterTriage"),
-                    StringStruct("ProductVersion", "1.0.4.0"),
+                    StringStruct("ProductVersion", "1.0.0.0"),
                 ],
             )
         ]),
